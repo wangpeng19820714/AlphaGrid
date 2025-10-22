@@ -44,13 +44,67 @@ python3 -m pip install --upgrade pip
 echo "📦 安装项目依赖包..."
 echo "   这可能需要几分钟时间，请耐心等待..."
 
-if [ -f "requirements.txt" ]; then
-    python3 -m pip install -r requirements.txt
-    echo "✅ 依赖包安装完成"
-else
-    echo "❌ 错误: 未找到 requirements.txt 文件"
-    exit 1
-fi
+# 选择安装模式
+echo "请选择安装模式:"
+echo "1) 最小安装 (仅核心功能)"
+echo "2) 完整安装 (包含所有功能)"
+echo "3) 生产环境 (推荐用于生产)"
+echo "4) 开发环境 (包含开发工具)"
+echo ""
+read -p "请输入选择 (1-4): " choice
+
+case $choice in
+    1)
+        echo "🔧 执行最小安装..."
+        if [ -f "requirements-minimal.txt" ]; then
+            python3 -m pip install -r requirements-minimal.txt
+            echo "✅ 最小依赖包安装完成"
+        else
+            echo "❌ 错误: 未找到 requirements-minimal.txt 文件"
+            exit 1
+        fi
+        ;;
+    2)
+        echo "🔧 执行完整安装..."
+        if [ -f "requirements.txt" ]; then
+            python3 -m pip install -r requirements.txt
+            echo "✅ 完整依赖包安装完成"
+        else
+            echo "❌ 错误: 未找到 requirements.txt 文件"
+            exit 1
+        fi
+        ;;
+    3)
+        echo "🔧 执行生产环境安装..."
+        if [ -f "requirements-prod.txt" ]; then
+            python3 -m pip install -r requirements-prod.txt
+            echo "✅ 生产环境依赖包安装完成"
+        else
+            echo "❌ 错误: 未找到 requirements-prod.txt 文件"
+            exit 1
+        fi
+        ;;
+    4)
+        echo "🔧 执行开发环境安装..."
+        if [ -f "requirements-dev.txt" ]; then
+            python3 -m pip install -r requirements-dev.txt
+            echo "✅ 开发环境依赖包安装完成"
+        else
+            echo "❌ 错误: 未找到 requirements-dev.txt 文件"
+            exit 1
+        fi
+        ;;
+    *)
+        echo "⚠️  无效选择，使用默认完整安装..."
+        if [ -f "requirements.txt" ]; then
+            python3 -m pip install -r requirements.txt
+            echo "✅ 依赖包安装完成"
+        else
+            echo "❌ 错误: 未找到 requirements.txt 文件"
+            exit 1
+        fi
+        ;;
+esac
 
 # 创建数据目录
 echo "📁 创建必要目录..."

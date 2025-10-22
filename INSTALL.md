@@ -11,6 +11,12 @@ chmod +x install.sh
 ./install.sh
 ```
 
+安装脚本会提供以下选项：
+- **最小安装**：仅核心功能 (pandas, numpy, pyarrow)
+- **完整安装**：包含所有功能
+- **生产环境**：推荐用于生产部署
+- **开发环境**：包含开发工具和测试框架
+
 #### 方法二：简化安装
 ```bash
 chmod +x install-simple.sh
@@ -22,8 +28,18 @@ chmod +x install-simple.sh
 # 1. 确保已安装 Python 3.8+
 python3 --version
 
-# 2. 安装依赖
+# 2. 选择安装模式
+# 最小安装（仅核心功能）
+pip3 install -r requirements-minimal.txt
+
+# 完整安装（包含所有功能）
 pip3 install -r requirements.txt
+
+# 生产环境（推荐用于生产）
+pip3 install -r requirements-prod.txt
+
+# 开发环境（包含开发工具）
+pip3 install -r requirements-dev.txt
 
 # 3. 创建必要目录
 mkdir -p quant/data quant/cache quant/reports
@@ -97,6 +113,54 @@ python run_backtest.py   # Windows
 ```
 
 如果看到回测结果输出，说明安装成功！
+
+## 📋 依赖项说明
+
+### 核心依赖（必需）
+- **pandas** (>=2.0.0): 数据处理和分析
+- **numpy** (>=1.24.0): 数值计算
+- **pyarrow** (>=10.0.0): 数据缓存优化
+
+### 生产环境依赖
+- **fastparquet** (>=0.8.0): Parquet 格式支持
+- **scipy** (>=1.10.0): 科学计算
+- **matplotlib** (>=3.6.0): 数据可视化
+- **seaborn** (>=0.12.0): 统计图表
+- **yfinance** (>=0.2.0): Yahoo Finance 数据
+- **tushare** (>=1.2.0): 中国股票数据
+- **akshare** (>=1.9.0): 开源财经数据接口
+- **scikit-learn** (>=1.3.0): 机器学习
+- **loguru** (>=0.7.0): 现代化日志
+- **psutil** (>=5.9.0): 系统监控
+
+### 开发环境依赖
+- **pytest** (>=7.0.0): 测试框架
+- **pytest-cov** (>=4.0.0): 测试覆盖率
+- **pytest-xdist** (>=3.0.0): 并行测试
+- **black** (>=23.0.0): 代码格式化
+- **flake8** (>=6.0.0): 代码检查
+- **mypy** (>=1.0.0): 类型检查
+- **isort** (>=5.12.0): 导入排序
+- **pre-commit** (>=3.0.0): Git 钩子
+- **sphinx** (>=6.0.0): 文档生成
+- **jupyter** (>=1.0.0): 交互式开发
+
+### 安装模式对比
+
+| 模式 | 包数量 | 用途 | 安装时间 |
+|------|--------|------|----------|
+| 最小安装 | 3个 | 基础功能 | ~30秒 |
+| 完整安装 | 26个 | 所有功能 | ~3分钟 |
+| 生产环境 | 13个 | 生产部署 | ~1分钟 |
+| 开发环境 | 23个 | 开发调试 | ~2分钟 |
+
+## 🔍 依赖项验证
+
+使用提供的验证脚本检查依赖项安装状态：
+
+```bash
+python3 verify_requirements.py
+```
 
 ## 📞 获取帮助
 

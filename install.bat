@@ -40,18 +40,91 @@ echo.
 echo 📦 安装项目依赖包...
 echo    这可能需要几分钟时间，请耐心等待...
 
-if exist "requirements.txt" (
-    python -m pip install -r requirements.txt
-    if errorlevel 1 (
-        echo ❌ 依赖包安装失败
+REM 选择安装模式
+echo.
+echo 请选择安装模式:
+echo 1) 最小安装 (仅核心功能)
+echo 2) 完整安装 (包含所有功能)
+echo 3) 生产环境 (推荐用于生产)
+echo 4) 开发环境 (包含开发工具)
+echo.
+set /p choice=请输入选择 (1-4): 
+
+if "%choice%"=="1" (
+    echo 🔧 执行最小安装...
+    if exist "requirements-minimal.txt" (
+        python -m pip install -r requirements-minimal.txt
+        if errorlevel 1 (
+            echo ❌ 最小依赖包安装失败
+            pause
+            exit /b 1
+        )
+        echo ✅ 最小依赖包安装完成
+    ) else (
+        echo ❌ 错误: 未找到 requirements-minimal.txt 文件
         pause
         exit /b 1
     )
-    echo ✅ 依赖包安装完成
+) else if "%choice%"=="2" (
+    echo 🔧 执行完整安装...
+    if exist "requirements.txt" (
+        python -m pip install -r requirements.txt
+        if errorlevel 1 (
+            echo ❌ 完整依赖包安装失败
+            pause
+            exit /b 1
+        )
+        echo ✅ 完整依赖包安装完成
+    ) else (
+        echo ❌ 错误: 未找到 requirements.txt 文件
+        pause
+        exit /b 1
+    )
+) else if "%choice%"=="3" (
+    echo 🔧 执行生产环境安装...
+    if exist "requirements-prod.txt" (
+        python -m pip install -r requirements-prod.txt
+        if errorlevel 1 (
+            echo ❌ 生产环境依赖包安装失败
+            pause
+            exit /b 1
+        )
+        echo ✅ 生产环境依赖包安装完成
+    ) else (
+        echo ❌ 错误: 未找到 requirements-prod.txt 文件
+        pause
+        exit /b 1
+    )
+) else if "%choice%"=="4" (
+    echo 🔧 执行开发环境安装...
+    if exist "requirements-dev.txt" (
+        python -m pip install -r requirements-dev.txt
+        if errorlevel 1 (
+            echo ❌ 开发环境依赖包安装失败
+            pause
+            exit /b 1
+        )
+        echo ✅ 开发环境依赖包安装完成
+    ) else (
+        echo ❌ 错误: 未找到 requirements-dev.txt 文件
+        pause
+        exit /b 1
+    )
 ) else (
-    echo ❌ 错误: 未找到 requirements.txt 文件
-    pause
-    exit /b 1
+    echo ⚠️  无效选择，使用默认完整安装...
+    if exist "requirements.txt" (
+        python -m pip install -r requirements.txt
+        if errorlevel 1 (
+            echo ❌ 依赖包安装失败
+            pause
+            exit /b 1
+        )
+        echo ✅ 依赖包安装完成
+    ) else (
+        echo ❌ 错误: 未找到 requirements.txt 文件
+        pause
+        exit /b 1
+    )
 )
 
 REM 创建数据目录
