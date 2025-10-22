@@ -13,7 +13,7 @@ import hashlib
 import warnings
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional, Dict, Any, Tuple
+from typing import Optional, Dict, Any, Tuple, List
 
 import pandas as pd
 
@@ -291,6 +291,80 @@ class OHLCVDataset:
         self.cache.save(src_path=csv_path, symbol=self.cfg.symbol, df=df)
         return df
 
+# ========== 多标的数据集 ==========
+class MultiOHLCVDataset:
+    """
+    多标的 OHLCV 数据集
+    - 支持目录下多个 CSV 文件
+    - 返回 MultiIndex (symbol, date) 的 DataFrame
+    - 复用单标的缓存机制
+    """
+
+    def __init__(
+        self,
+        dir_path: str | Path,
+        symbols: Optional[List[str]] = None,
+        cache_dir: str | Path = "~/.quant/cache",
+        **kwargs
+    ):
+        self.dir_path = _norm_path(dir_path)
+        if not self.dir_path.is_dir():
+            raise FileNotFoundError(f"目录不存在：{self.dir_path}")
+        
+        self.cache = CacheStore(cache_dir)
+        self.symbols = self._resolve_symbols(symbols)
+        self.config = {**kwargs}
+
+    def _resolve_symbols(self, symbols: Optional[List[str]]) -> List[str]:
+        """解析标的列表"""
+        if symbols is None:
+            symbols = [p.stem for p in sorted(self.dir_path.glob("*.csv"))]
+        
+        if not symbols:
+            raise ValueError("未发现任何 CSV 文件")
+        
+        return symbols
+
+    def _load_symbol(self, symbol: str) -> pd.DataFrame:
+        """加载单个标的的数据"""
+        # 创建单标的配置
+        cfg = DataConfig(
+            source="csv",
+            path=str(self.dir_path),
+            cache_dir=str(self.cache.cache_dir),
+            symbol=symbol,
+            **self.config
+        )
+        
+        # 尝试从缓存加载
+        src = CSVDataSource(cfg)
+        src_path = src._resolve_csv_path()
+        cached = self.cache.load(src_path=src_path, symbol=symbol)
+        
+        if cached is not None:
+            return cached
+        
+        # 缓存未命中，重新加载并保存
+        df, csv_path = src.read_csv()
+        self.cache.save(src_path=csv_path, symbol=symbol, df=df)
+        return df
+
+    def get(self) -> pd.DataFrame:
+        """获取多标的数据"""
+        frames = []
+        
+        for symbol in self.symbols:
+            df = self._load_symbol(symbol)
+            df = df.copy()
+            df["symbol"] = symbol
+            frames.append(df.reset_index().set_index(["symbol", "date"]))
+        
+        # 合并所有数据
+        result = pd.concat(frames, axis=0).sort_index()
+        
+        # 标准化列顺序和类型
+        columns = ["open", "high", "low", "close", "volume"]
+        return result[columns].astype(float)
 
 # ========== 简单自测 ==========
 if __name__ == "__main__":
