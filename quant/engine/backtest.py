@@ -11,7 +11,7 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 from dataclasses import dataclass
-from typing import Dict, List, Tuple, Union
+from typing import Dict, List, Tuple, Union, Optional, Literal
 
 # --------- 常用指标（可选） ---------
 def atr(df: pd.DataFrame, n: int = 14) -> pd.Series:
@@ -537,3 +537,235 @@ def _generate_next_day_orders(
     orders = (target_shares - current_position).astype(float)
     
     return orders
+
+    # 追加到 engine/backtest.py 末尾（保留你已有函数）
+
+# ========== 撮合器系统 ==========
+
+@dataclass
+class MatchConfig:
+    """撮合配置"""
+    rule: Literal["open_fill", "close_fill"] = "close_fill"
+    slip_bp: float = 2.0
+    fee_bp: float = 10.0
+    tax_bp_sell: float = 0.0
+    pov: Optional[float] = None
+    lot_size: int = 1
+
+
+class BaseMatcher:
+    """撮合器基类"""
+    
+    def __init__(self, cfg: MatchConfig):
+        self.cfg = cfg
+
+    def choose_price(self, df_sym: pd.DataFrame) -> pd.Series:
+        """选择成交价格"""
+        raise NotImplementedError
+
+    def limit_by_pov(self, df_sym: pd.DataFrame, desired: pd.Series) -> pd.Series:
+        """POV 限制成交量"""
+        if self.cfg.pov is None:
+            return desired
+        
+        if "volume" not in df_sym.columns:
+            raise ValueError("使用 POV 约束需要 'volume' 列")
+        
+        cap = (df_sym["volume"] * self.cfg.pov).fillna(0.0)
+        lot_size = max(self.cfg.lot_size, 1)
+        
+        buy = desired.clip(lower=0.0)
+        sell = desired.clip(upper=0.0)
+        buy_exec = np.minimum(buy, np.floor(cap / lot_size) * lot_size)
+        sell_exec = np.maximum(sell, -np.floor(cap / lot_size) * lot_size)
+        
+        return (buy_exec + sell_exec).astype(float)
+
+    def __call__(self, df_sym: pd.DataFrame, desired_orders: pd.Series) -> Tuple[pd.Series, pd.Series, pd.Series, pd.Series]:
+        """执行撮合"""
+        price = self.choose_price(df_sym)
+        fills = self.limit_by_pov(df_sym, desired_orders)
+        
+        trade_px = pd.Series(
+            _directional_slippage(price.values, fills.values, self.cfg.slip_bp),
+            index=price.index
+        )
+        
+        notional_abs = (fills.abs() * trade_px).fillna(0.0)
+        fees = pd.Series(_commission(notional_abs.values, self.cfg.fee_bp), index=price.index)
+        
+        sell_mask = fills < 0
+        sell_notional_abs = (notional_abs * sell_mask).fillna(0.0)
+        taxes = pd.Series(_sell_tax(sell_notional_abs.values, self.cfg.tax_bp_sell), index=price.index)
+        
+        return fills, trade_px, fees, taxes
+
+
+class CloseFillMatcher(BaseMatcher):
+    """收盘成交撮合器"""
+    
+    def choose_price(self, df_sym: pd.DataFrame) -> pd.Series:
+        if "close" not in df_sym.columns:
+            raise ValueError("close_fill 需要 'close' 列")
+        return df_sym["close"].astype(float)
+
+
+class OpenFillMatcher(BaseMatcher):
+    """开盘成交撮合器"""
+    
+    def choose_price(self, df_sym: pd.DataFrame) -> pd.Series:
+        if "open" not in df_sym.columns:
+            raise ValueError("open_fill 需要 'open' 列")
+        return df_sym["open"].astype(float)
+
+
+def make_matcher(cfg: MatchConfig) -> BaseMatcher:
+    """创建撮合器"""
+    return OpenFillMatcher(cfg) if cfg.rule == "open_fill" else CloseFillMatcher(cfg)
+
+# ========== 高级组合回测 ==========
+
+def run_portfolio_with_matcher(
+    df: pd.DataFrame,
+    orders: pd.Series,
+    matcher_cfg: MatchConfig,
+    carry_unfilled: bool = True,
+) -> Dict[str, Union[pd.Series, pd.DataFrame]]:
+    """
+    带撮合器的组合回测
+    
+    参数:
+        df: 价格数据，MultiIndex [symbol, date]
+        orders: 订单数据，MultiIndex [symbol, date]
+        matcher_cfg: 撮合器配置
+        carry_unfilled: 是否滚动未成交订单
+        
+    返回:
+        回测结果字典
+    """
+    # 验证和预处理数据
+    if df.index.names != ["symbol", "date"]:
+        df = df.copy()
+        df.index = df.index.set_names(["symbol", "date"])
+    
+    matcher = make_matcher(matcher_cfg)
+    orders = orders.reindex(df.index).fillna(0.0)
+    
+    # 获取基础信息
+    dates = df.index.get_level_values("date").unique()
+    symbols = df.index.get_level_values("symbol").unique().tolist()
+    
+    # 初始化结果容器
+    results = _initialize_matcher_results(dates, symbols)
+    
+    # 初始化状态
+    state = _initialize_matcher_state(df, symbols, dates)
+    
+    # 执行回测
+    for date in dates:
+        _process_matcher_day(date, df, orders, matcher, state, results, carry_unfilled)
+    
+    # 计算组合 PnL
+    results["portfolio_pnl"] = results["per_symbol_pnl"].sum(axis=1)
+    
+    return results
+
+
+def _initialize_matcher_results(dates: pd.DatetimeIndex, symbols: List[str]) -> Dict:
+    """初始化撮合器回测结果容器"""
+    return {
+        "per_symbol_pnl": pd.DataFrame(0.0, index=dates, columns=symbols),
+        "positions": pd.DataFrame(0.0, index=dates, columns=symbols),
+        "fills": pd.DataFrame(0.0, index=dates, columns=symbols),
+        "trade_price": pd.DataFrame(np.nan, index=dates, columns=symbols),
+        "fees": pd.DataFrame(0.0, index=dates, columns=symbols),
+        "taxes": pd.DataFrame(0.0, index=dates, columns=symbols),
+    }
+
+
+def _initialize_matcher_state(df: pd.DataFrame, symbols: List[str], dates: pd.DatetimeIndex) -> Dict:
+    """初始化撮合器回测状态"""
+    first_date = dates[0]
+    first_close = df.xs(first_date, level="date")["close"].reindex(symbols).astype(float)
+    
+    return {
+        "prev_position": pd.Series(0.0, index=symbols),
+        "prev_close": first_close,
+        "backlog": pd.Series(0.0, index=symbols),
+    }
+
+
+def _process_matcher_day(
+    date: pd.Timestamp,
+    df: pd.DataFrame,
+    orders: pd.Series,
+    matcher: BaseMatcher,
+    state: Dict,
+    results: Dict,
+    carry_unfilled: bool,
+) -> None:
+    """处理撮合器回测的单个交易日"""
+    symbols = results["per_symbol_pnl"].columns
+    
+    # 计算价格变动收益
+    close_today = df.xs(date, level="date")["close"].reindex(symbols).astype(float)
+    price_pnl = (close_today - state["prev_close"]) * state["prev_position"]
+    
+    # 计算当日意向订单（含 backlog）
+    want_today = orders.xs(date, level="date").reindex(symbols).fillna(0.0) + state["backlog"]
+    
+    # 执行撮合
+    fills_today, trade_px_today, fees_today, taxes_today = _execute_matcher_trades(
+        df, date, want_today, matcher, symbols
+    )
+    
+    # 更新持仓和 PnL
+    position_eod = state["prev_position"] + fills_today
+    pnl_today = price_pnl - fees_today - taxes_today
+    
+    # 记录结果
+    results["per_symbol_pnl"].loc[date] = pnl_today
+    results["positions"].loc[date] = position_eod
+    results["fills"].loc[date] = fills_today
+    results["trade_price"].loc[date] = trade_px_today
+    results["fees"].loc[date] = fees_today
+    results["taxes"].loc[date] = taxes_today
+    
+    # 更新 backlog
+    if carry_unfilled:
+        state["backlog"] = want_today - fills_today
+    else:
+        state["backlog"] = pd.Series(0.0, index=symbols)
+    
+    # 更新状态
+    state["prev_position"] = position_eod
+    state["prev_close"] = close_today
+
+
+def _execute_matcher_trades(
+    df: pd.DataFrame,
+    date: pd.Timestamp,
+    want_today: pd.Series,
+    matcher: BaseMatcher,
+    symbols: List[str],
+) -> Tuple[pd.Series, pd.Series, pd.Series, pd.Series]:
+    """执行撮合器交易"""
+    fills_today = pd.Series(0.0, index=symbols)
+    trade_px_today = pd.Series(np.nan, index=symbols)
+    fees_today = pd.Series(0.0, index=symbols)
+    taxes_today = pd.Series(0.0, index=symbols)
+    
+    for symbol in symbols:
+        symbol_data = df.loc[symbol]
+        desired = pd.Series(0.0, index=symbol_data.index)
+        if date in desired.index:
+            desired.loc[date] = want_today.get(symbol, 0.0)
+        
+        fills, trade_px, fees, taxes = matcher(symbol_data, desired)
+        
+        fills_today[symbol] = fills.loc[date]
+        trade_px_today[symbol] = trade_px.loc[date]
+        fees_today[symbol] = fees.loc[date]
+        taxes_today[symbol] = taxes.loc[date]
+    
+    return fills_today, trade_px_today, fees_today, taxes_today
