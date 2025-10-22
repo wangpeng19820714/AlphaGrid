@@ -1,114 +1,119 @@
 # engine/data.py
 # -*- coding: utf-8 -*-
 """
-CSV数据读取与缓存模块
-- 支持单文件CSV或目录形式的{symbol}.csv
-- 优先使用parquet缓存，回退到pickle
-- 自动规范化OHLCV数据格式
+读取 csv + 本地缓存抽象（离线优先）
+- 支持：单文件 csv；或目录形式的 {symbol}.csv
+- 缓存：优先 parquet（pyarrow/fastparquet），缺失时回退 pickle
+- 规范化列：open, high, low, close, volume；index=date（升序、去重）
 """
 from __future__ import annotations
+import os
 import json
 import hashlib
 import warnings
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, Tuple
 
 import pandas as pd
 
 
+# ========== 配置 ==========
 @dataclass
 class DataConfig:
-    """数据源配置"""
-    path: str = "./data/stock.csv"
-    cache_dir: str = "~/.quant/cache"
-    date_col: str = "date"
-    symbol: Optional[str] = None
-    read_csv_kwargs: Dict[str, Any] = field(default_factory=dict)
+    source: str = "csv"                 # 目前仅实现 csv
+    path: str = "./data/stock.csv"      # 文件路径；或目录路径（需配合 symbol）
+    cache_dir: str = "~/.quant/cache"   # 缓存目录
+    date_col: str = "date"              # 日期列名（大小写不敏感）
+    freq: str = "D"                     # 频率（预留；当前用于校验/提示）
+    symbol: Optional[str] = None        # 当 path 是目录时，需要指定 symbol
+    # 额外传参给 pandas.read_csv（如 sep、encoding 等）
+    read_csv_kwargs: Optional[Dict[str, Any]] = None
 
 
+# ========== 工具 ==========
 def _norm_path(p: str | Path) -> Path:
-    """标准化路径"""
-    return Path(p).expanduser().resolve()
+    return Path(os.path.expanduser(str(p))).resolve()
 
 
 def _file_fingerprint(path: Path) -> str:
-    """生成文件指纹用于缓存验证"""
+    """
+    使用 (path, size, mtime) 生成稳定签名；无需读取完整文件，避免大文件开销。
+    """
     st = path.stat()
-    content = f"{path}|{st.st_size}|{int(st.st_mtime)}"
-    return hashlib.md5(content.encode()).hexdigest()
+    base = f"{str(path)}|{st.st_size}|{int(st.st_mtime)}"
+    return hashlib.md5(base.encode("utf-8")).hexdigest()
 
 
-def _get_cache_backend():
-    """选择缓存后端：parquet优先，否则pickle"""
+def _choose_cache_backend() -> Tuple[str, bool]:
+    """
+    选择缓存后端：parquet 优先；否则退化到 pickle
+    返回：(ext, use_parquet)
+    """
     try:
+        # 优先尝试 pyarrow / fastparquet
         import pyarrow  # noqa
         return ".parquet", True
-    except ImportError:
+    except Exception:
         try:
             import fastparquet  # noqa
             return ".parquet", True
-        except ImportError:
-            warnings.warn("未检测到parquet库，使用pickle缓存")
+        except Exception:
+            warnings.warn("未检测到 pyarrow/fastparquet，将使用 pickle 作为缓存格式。")
             return ".pkl", False
 
 
+# ========== 缓存层 ==========
 class CacheStore:
-    """缓存管理器"""
-    
     def __init__(self, cache_dir: str | Path):
         self.cache_dir = _norm_path(cache_dir)
         self.cache_dir.mkdir(parents=True, exist_ok=True)
-        self.ext, self.use_parquet = _get_cache_backend()
+        self.ext, self.use_parquet = _choose_cache_backend()
 
-    def _get_cache_key(self, src_path: Path, symbol: Optional[str]) -> str:
-        content = f"{src_path}|{symbol or ''}"
-        return hashlib.md5(content.encode()).hexdigest()
+    def _cache_key(self, *, src_path: Path, symbol: Optional[str]) -> str:
+        raw = f"{str(src_path)}|{symbol or ''}"
+        return hashlib.md5(raw.encode("utf-8")).hexdigest()
 
-    def _get_cache_paths(self, src_path: Path, symbol: Optional[str]) -> tuple[Path, Path]:
-        key = self._get_cache_key(src_path, symbol)
-        return (
-            self.cache_dir / f"{key}{self.ext}",
-            self.cache_dir / f"{key}.meta.json"
-        )
+    def cache_paths(self, *, src_path: Path, symbol: Optional[str]) -> Tuple[Path, Path]:
+        key = self._cache_key(src_path=src_path, symbol=symbol)
+        data_path = self.cache_dir / f"{key}{self.ext}"
+        meta_path = self.cache_dir / f"{key}.meta.json"
+        return data_path, meta_path
 
-    def load(self, src_path: Path, symbol: Optional[str]) -> Optional[pd.DataFrame]:
-        """加载缓存数据"""
-        data_path, meta_path = self._get_cache_paths(src_path, symbol)
-        
-        if not (data_path.exists() and meta_path.exists()):
+    def load(self, *, src_path: Path, symbol: Optional[str]) -> Optional[pd.DataFrame]:
+        data_path, meta_path = self.cache_paths(src_path=src_path, symbol=symbol)
+        if not data_path.exists() or not meta_path.exists():
             return None
 
+        # 校验签名
         try:
             with meta_path.open("r", encoding="utf-8") as f:
                 meta = json.load(f)
-            
-            # 验证文件指纹
-            if meta.get("fingerprint") != _file_fingerprint(src_path):
-                return None
-
-            # 读取数据
-            if self.use_parquet:
-                return pd.read_parquet(data_path)
-            else:
-                return pd.read_pickle(data_path)
-                
-        except Exception as e:
-            warnings.warn(f"缓存加载失败: {e}")
+        except Exception:
             return None
 
-    def save(self, src_path: Path, symbol: Optional[str], df: pd.DataFrame) -> None:
-        """保存数据到缓存"""
-        data_path, meta_path = self._get_cache_paths(src_path, symbol)
-        
+        cur_fp = _file_fingerprint(src_path)
+        if meta.get("fingerprint") != cur_fp:
+            # 源文件有变动，缓存失效
+            return None
+
         try:
-            # 保存数据
+            if self.use_parquet:
+                df = pd.read_parquet(data_path)
+            else:
+                df = pd.read_pickle(data_path)
+            return df
+        except Exception as e:
+            warnings.warn(f"加载缓存失败，将重建缓存：{e}")
+            return None
+
+    def save(self, *, src_path: Path, symbol: Optional[str], df: pd.DataFrame) -> None:
+        data_path, meta_path = self.cache_paths(src_path=src_path, symbol=symbol)
+        try:
             if self.use_parquet:
                 df.to_parquet(data_path, index=True)
             else:
                 df.to_pickle(data_path)
-            
-            # 保存元数据
             meta = {
                 "fingerprint": _file_fingerprint(src_path),
                 "source_path": str(src_path),
@@ -118,16 +123,20 @@ class CacheStore:
             }
             with meta_path.open("w", encoding="utf-8") as f:
                 json.dump(meta, f, ensure_ascii=False, indent=2)
-                
         except Exception as e:
-            warnings.warn(f"缓存保存失败: {e}")
+            warnings.warn(f"写入缓存失败（不影响回测）：{e}")
 
 
+# ========== CSV 读取与标准化 ==========
 class CSVDataSource:
-    """CSV数据源读取器"""
-    
-    # 列名别名映射
-    COLUMN_ALIASES = {
+    """
+    读取 CSV，并规范化为标准 OHLCV：
+    - index: DatetimeIndex（升序、去重）
+    - columns: open, high, low, close, volume（float）
+    """
+
+    # 允许的别名（大小写不敏感）
+    ALIASES = {
         "date": {"date", "datetime", "trade_date", "time"},
         "open": {"open", "o", "openingprice"},
         "high": {"high", "h", "max", "highprice"},
@@ -141,134 +150,154 @@ class CSVDataSource:
         self.src_path = _norm_path(cfg.path)
 
     def _resolve_csv_path(self) -> Path:
-        """解析CSV文件路径"""
+        """
+        - 若 path 是文件：直接返回
+        - 若 path 是目录：需要 symbol，对应 {dir}/{symbol}.csv
+        """
         if self.src_path.is_file():
             return self.src_path
-        
         if self.src_path.is_dir():
             if not self.cfg.symbol:
-                raise ValueError("目录路径需要指定symbol")
-            csv_path = self.src_path / f"{self.cfg.symbol}.csv"
-            if not csv_path.exists():
-                raise FileNotFoundError(f"文件不存在: {csv_path}")
-            return csv_path
-            
-        raise FileNotFoundError(f"无效路径: {self.src_path}")
+                raise ValueError("path 为目录时必须提供 symbol（如 DataConfig.symbol='600000.SH'）。")
+            candidate = self.src_path / f"{self.cfg.symbol}.csv"
+            if not candidate.exists():
+                raise FileNotFoundError(f"未找到 {candidate}")
+            return candidate
+        raise FileNotFoundError(f"无效的 CSV 路径：{self.src_path}")
 
-    def _find_column(self, columns: list, target_type: str) -> Optional[str]:
-        """查找匹配的列名"""
-        lower_map = {col.lower(): col for col in columns}
-        for alias in self.COLUMN_ALIASES[target_type]:
-            if alias in lower_map:
-                return lower_map[alias]
+    @staticmethod
+    def _match_col(cols, targets) -> Optional[str]:
+        lower = {c.lower(): c for c in cols}
+        for t in targets:
+            if t in lower:
+                return lower[t]
         return None
 
-    def _standardize_data(self, df: pd.DataFrame) -> pd.DataFrame:
-        """标准化数据格式"""
-        columns = list(df.columns)
-        
-        # 查找各列
-        date_col = self._find_column(columns, "date") or self.cfg.date_col
-        ohlcv_cols = {
-            "open": self._find_column(columns, "open"),
-            "high": self._find_column(columns, "high"),
-            "low": self._find_column(columns, "low"),
-            "close": self._find_column(columns, "close"),
-            "volume": self._find_column(columns, "volume"),
-        }
-        
-        # 检查缺失列
-        missing = [name for name, col in ohlcv_cols.items() if col is None]
-        if missing:
-            raise ValueError(f"缺少必要列: {missing}, 现有列: {columns}")
+    def _standardize(self, raw: pd.DataFrame) -> pd.DataFrame:
+        cols = list(raw.columns)
+        # 定位列名（大小写不敏感）
+        date_col = self._match_col(cols, self.ALIASES["date"]) or self.cfg.date_col
+        o = self._match_col(cols, self.ALIASES["open"])
+        h = self._match_col(cols, self.ALIASES["high"])
+        l = self._match_col(cols, self.ALIASES["low"])
+        c = self._match_col(cols, self.ALIASES["close"])
+        v = self._match_col(cols, self.ALIASES["volume"])
 
-        # 处理日期列
+        miss = [name for name, real in
+                [("open", o), ("high", h), ("low", l), ("close", c), ("volume", v)]
+                if real is None]
+        if miss:
+            raise ValueError(f"CSV 列缺失或未识别：{miss}，现有列：{cols}")
+
+        df = raw.copy()
+
+        # 解析日期，设置索引
         try:
-            df[date_col] = pd.to_datetime(df[date_col], errors="coerce")
+            df[date_col] = pd.to_datetime(df[date_col], errors="coerce", utc=False)
         except Exception as e:
-            raise ValueError(f"日期解析失败: {e}")
-        
-        df = df.dropna(subset=[date_col]).set_index(date_col)
+            raise ValueError(f"日期列解析失败：{date_col}, error={e}")
+
+        df = df.dropna(subset=[date_col])
+        df = df.set_index(date_col)
         df.index.name = "date"
 
-        # 选择并重命名OHLCV列
-        df = df[[ohlcv_cols["open"], ohlcv_cols["high"], ohlcv_cols["low"], 
-                 ohlcv_cols["close"], ohlcv_cols["volume"]]]
+        # 选择并重命名列
+        df = df[[o, h, l, c, v]]
         df.columns = ["open", "high", "low", "close", "volume"]
-        
-        # 转换数据类型并清理
+
+        # 类型统一为 float（volume 也转 float，必要时你可自行改为 int64）
         df = df.astype(float)
-        df = df[~df.index.duplicated(keep="last")].sort_index()
-        
+
+        # 去重、升序
+        df = df[~df.index.duplicated(keep="last")]
+        df = df.sort_index()
+
+        # 校验频率（提示而不强制）
+        if self.cfg.freq.upper() == "D":
+            # 简单检查：日期是否单调递增；是否有逆序已处理
+            pass
+
         return df
 
-    def read_csv(self) -> tuple[pd.DataFrame, Path]:
-        """读取并标准化CSV数据"""
+    def read_csv(self) -> pd.DataFrame:
         csv_path = self._resolve_csv_path()
-        
-        # 设置读取参数
-        kwargs = {
-            "encoding": "utf-8",
-            "low_memory": False,
-            **self.cfg.read_csv_kwargs
-        }
-        
+        kwargs = dict(self.cfg.read_csv_kwargs or {})
+        if "encoding" not in kwargs:
+            kwargs["encoding"] = "utf-8"
+        if "low_memory" not in kwargs:
+            kwargs["low_memory"] = False
+
         try:
-            df = pd.read_csv(csv_path, **kwargs)
+            raw = pd.read_csv(csv_path, **kwargs)
         except UnicodeDecodeError:
+            # 若编码错误，尝试 gbk
             kwargs["encoding"] = "gbk"
-            df = pd.read_csv(csv_path, **kwargs)
-        
-        df = self._standardize_data(df)
+            raw = pd.read_csv(csv_path, **kwargs)
+
+        df = self._standardize(raw)
         if df.empty:
-            warnings.warn(f"数据为空: {csv_path}")
-            
+            warnings.warn(f"CSV 数据为空：{csv_path}")
         return df, csv_path
 
 
+# ========== 数据集 API ==========
 class OHLCVDataset:
-    """OHLCV数据集主接口"""
-    
+    """
+    与之前示例兼容：
+        ds = OHLCVDataset("data/stock.csv")
+        df = ds.get()
+    同时支持配置化：
+        ds = OHLCVDataset.from_config(DataConfig(path="data", symbol="000001.SZ"))
+    """
+
     def __init__(self, path: str | Path, cache_dir: str | Path = "~/.quant/cache",
                  symbol: Optional[str] = None, date_col: str = "date",
-                 read_csv_kwargs: Optional[Dict[str, Any]] = None):
-        self.cfg = DataConfig(
+                 freq: str = "D", read_csv_kwargs: Optional[Dict[str, Any]] = None):
+        cfg = DataConfig(
             path=str(path),
             cache_dir=str(cache_dir),
             symbol=symbol,
             date_col=date_col,
-            read_csv_kwargs=read_csv_kwargs or {}
+            freq=freq,
+            read_csv_kwargs=read_csv_kwargs,
         )
-        self.cache = CacheStore(self.cfg.cache_dir)
-        self.src = CSVDataSource(self.cfg)
+        self.cfg = cfg
+        self.cache = CacheStore(cfg.cache_dir)
+        self.src = CSVDataSource(cfg)
 
     @classmethod
     def from_config(cls, cfg: DataConfig) -> "OHLCVDataset":
-        """从配置创建数据集"""
         return cls(
             path=cfg.path,
             cache_dir=cfg.cache_dir,
             symbol=cfg.symbol,
             date_col=cfg.date_col,
-            read_csv_kwargs=cfg.read_csv_kwargs
+            freq=cfg.freq,
+            read_csv_kwargs=cfg.read_csv_kwargs,
         )
 
     def get(self) -> pd.DataFrame:
-        """获取数据（优先缓存）"""
+        """
+        优先读缓存；若源文件有更新则重建缓存。
+        """
+        # 尝试缓存
         source_path = self.src._resolve_csv_path()
-        
-        # 尝试从缓存加载
-        cached = self.cache.load(source_path, self.cfg.symbol)
+        cached = self.cache.load(src_path=source_path, symbol=self.cfg.symbol)
         if cached is not None and not cached.empty:
             return cached
 
-        # 从源文件读取并缓存
+        # 重建缓存
         df, csv_path = self.src.read_csv()
-        self.cache.save(csv_path, self.cfg.symbol, df)
+        self.cache.save(src_path=csv_path, symbol=self.cfg.symbol, df=df)
         return df
 
 
+# ========== 简单自测 ==========
 if __name__ == "__main__":
-    # 测试单文件CSV
-    ds = OHLCVDataset(path="./ data/stock.csv")
+    # 1) 单文件 csv
+    ds = OHLCVDataset(path="./data/stock.csv")
     print(ds.get().head())
+
+    # 2) 目录 + symbol
+    # ds2 = OHLCVDataset(path="./data", symbol="000001.SZ")
+    # print(ds2.get().tail())
