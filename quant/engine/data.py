@@ -270,5 +270,5 @@ class OHLCVDataset:
 
 if __name__ == "__main__":
     # 测试单文件CSV
-    ds = OHLCVDataset(path="./data/stock.csv")
+    ds = OHLCVDataset(path="./ data/stock.csv")
     print(ds.get().head())
