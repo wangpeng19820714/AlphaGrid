@@ -1,90 +1,164 @@
 # strategies/sma_cross.py
 # -*- coding: utf-8 -*-
 """
-SMA/EMA 双均线择时（-1/0/1）
-- 默认：状态型信号（regime），金叉后持续为 +1，死叉后持续为 -1
-- 可选：仅在发生交叉当日给脉冲信号（on_cross）
-- 支持：长多/禁做空、容忍带(band)避免噪音、信号滞后一根（delay）
+双均线交叉策略信号生成器
+
+功能特性：
+- 支持SMA/EMA双均线交叉信号
+- 两种信号模式：持续状态(regime)或交叉脉冲(on_cross)
+- 容忍带机制避免噪音信号
+- 支持仅做多模式和信号延迟
 """
 
 from __future__ import annotations
 import pandas as pd
+import numpy as np
 
 __all__ = ["sma_cross"]
 
-def _ma(series: pd.Series, window: int, kind: str = "sma") -> pd.Series:
-    if kind.lower() == "ema":
+def _calculate_moving_average(series: pd.Series, window: int, ma_type: str = "sma") -> pd.Series:
+    """计算移动平均线"""
+    if ma_type.lower() == "ema":
         return series.ewm(span=window, adjust=False, min_periods=window).mean()
-    # 默认 SMA
     return series.rolling(window, min_periods=window).mean()
+
+def _generate_raw_signals(fast_ma: pd.Series, slow_ma: pd.Series, band_bp: float) -> pd.Series:
+    """生成原始信号：1(多头), -1(空头), 0(无信号)"""
+    diff = fast_ma - slow_ma
+    
+    if band_bp > 0:
+        # 使用容忍带避免噪音
+        threshold = (band_bp / 10000.0) * slow_ma.abs().clip(lower=1e-12)
+        signals = np.where(diff > threshold, 1, 
+                          np.where(diff < -threshold, -1, 0))
+    else:
+        # 无容忍带，直接比较
+        signals = np.where(diff > 0, 1, 
+                          np.where(diff < 0, -1, 0))
+    
+    return pd.Series(signals, index=fast_ma.index, dtype=int)
+
+def _apply_signal_mode(signals: pd.Series, mode: str) -> pd.Series:
+    """应用信号模式：regime(持续状态) 或 on_cross(交叉脉冲)"""
+    if mode == "regime":
+        # 状态型：用前向填充保持信号状态
+        return signals.replace(0, pd.NA).ffill().fillna(0).infer_objects(copy=False).astype(int)
+    
+    elif mode == "on_cross":
+        # 脉冲型：仅在交叉时产生信号
+        prev_signals = signals.shift(1).fillna(0)
+        golden_cross = (prev_signals <= 0) & (signals > 0)  # 金叉
+        death_cross = (prev_signals >= 0) & (signals < 0)   # 死叉
+        
+        pulse_signals = pd.Series(0, index=signals.index, dtype=int)
+        pulse_signals[golden_cross] = 1
+        pulse_signals[death_cross] = -1
+        return pulse_signals
+    
+    else:
+        raise ValueError(f"不支持的信号模式: {mode}。支持的模式: 'regime', 'on_cross'")
 
 def sma_cross(
     df: pd.DataFrame,
     fast: int = 10,
     slow: int = 30,
     price_col: str = "close",
-    ma: str = "sma",                 # "sma" | "ema"
-    mode: str = "regime",            # "regime"（持有状态）| "on_cross"（仅交叉日脉冲）
-    band_bp: float = 0.0,            # 容忍带（基点），例如 5 表示 5bp，避免“假穿越”
-    long_only: bool = False,         # 禁做空时将 -1 裁剪为 0
-    delay: int = 0,                  # 信号滞后 N 根（避免前视；常用 1）
+    ma: str = "sma",
+    mode: str = "regime",
+    band_bp: float = 0.0,
+    long_only: bool = False,
+    delay: int = 0,
 ) -> pd.Series:
     """
-    返回：pd.Series，取值 ∈ {-1, 0, 1}，index 与 df 对齐
+    双均线交叉策略信号生成器
+    
+    Parameters:
+    -----------
+    df : pd.DataFrame
+        包含价格数据的DataFrame
+    fast : int, default 10
+        快均线周期
+    slow : int, default 30  
+        慢均线周期
+    price_col : str, default 'close'
+        价格列名
+    ma : str, default 'sma'
+        均线类型：'sma' 或 'ema'
+    mode : str, default 'regime'
+        信号模式：'regime'(持续状态) 或 'on_cross'(交叉脉冲)
+    band_bp : float, default 0.0
+        容忍带(基点)，避免噪音信号
+    long_only : bool, default False
+        是否仅做多(将-1信号转为0)
+    delay : int, default 0
+        信号延迟周期数
+        
+    Returns:
+    --------
+    pd.Series
+        交易信号：1(买入), -1(卖出), 0(持有/无信号)
     """
+    # 参数验证
     if price_col not in df.columns:
-        raise ValueError(f"df 需要包含列 '{price_col}'")
+        raise ValueError(f"DataFrame中缺少价格列: '{price_col}'")
     if fast <= 0 or slow <= 0:
-        raise ValueError("fast/slow 必须为正整数")
+        raise ValueError("均线周期必须为正整数")
     if fast >= slow:
-        # 常见约定：快均线 < 慢均线；若相等或反了，仍允许但会提示
-        pass
-
-    px = df[price_col].astype(float)
-    ma_fast = _ma(px, fast, ma)
-    ma_slow = _ma(px, slow, ma)
-
-    # 计算差异与容忍带（以慢均线为基准的相对差）
-    # diff_ratio > +th 视为多头；< -th 视为空头；否则视为无明确趋势
-    diff = ma_fast - ma_slow
-    th = (band_bp / 10000.0) * ma_slow.abs().clip(lower=1e-12)
-    regime = pd.Series(0, index=df.index, dtype=int)
-    regime = regime.where(diff.abs() <= th, other=0)  # 先置 0，下面再赋方向
-    regime = regime.mask(diff > th, 1)
-    regime = regime.mask(diff < -th, -1)
-
-    if mode == "regime":
-        # 状态型：用最后一个非零值前向填充；起始NaN/未成熟区间仍为0
-        regime = regime.replace(0, pd.NA).ffill().fillna(0).astype(int)
-    elif mode == "on_cross":
-        # 脉冲型：仅在穿越当日给信号（从 <=0 到 >0 记 +1；从 >=0 到 <0 记 -1）
-        sign_now = regime
-        sign_prev = sign_now.shift(1).fillna(0)
-        up_cross = (sign_prev <= 0) & (sign_now > 0)
-        dn_cross = (sign_prev >= 0) & (sign_now < 0)
-        regime = pd.Series(0, index=df.index, dtype=int)
-        regime[up_cross] = 1
-        regime[dn_cross] = -1
-    else:
-        raise ValueError("mode 仅支持 'regime' 或 'on_cross'")
-
+        print(f"警告: 快均线周期({fast}) >= 慢均线周期({slow})，建议 fast < slow")
+    
+    # 计算均线
+    price = df[price_col].astype(float)
+    fast_ma = _calculate_moving_average(price, fast, ma)
+    slow_ma = _calculate_moving_average(price, slow, ma)
+    
+    # 生成原始信号
+    signals = _generate_raw_signals(fast_ma, slow_ma, band_bp)
+    
+    # 应用信号模式
+    signals = _apply_signal_mode(signals, mode)
+    
+    # 应用约束条件
     if long_only:
-        regime = regime.clip(lower=0)
-
+        signals = signals.clip(lower=0)
+    
     if delay > 0:
-        regime = regime.shift(delay).fillna(0).astype(int)
+        signals = signals.shift(delay).fillna(0).astype(int)
+    
+    # 处理均线未成熟期
+    first_valid_idx = slow_ma.first_valid_index()
+    if first_valid_idx is not None:
+        signals.loc[:first_valid_idx] = 0
+    
+    return signals
 
-    # 均线未成熟的前 slow 根强制为 0（避免 warmup 噪声）
-    regime.loc[: ma_slow.index[ma_slow.first_valid_index()]] = 0
-
-    return regime
-
-# 简单自测
+# 测试示例
 if __name__ == "__main__":
-    import numpy as np
-    idx = pd.date_range("2024-01-01", periods=60, freq="B")
-    # 构造一个上升+回落的价格序列
-    px = pd.Series(np.r_[np.linspace(10, 12, 30), np.linspace(12, 11, 30)], index=idx)
-    df = pd.DataFrame({"close": px})
-    sig = sma_cross(df, fast=5, slow=20, ma="sma", mode="regime", band_bp=3, long_only=False, delay=1)
-    print(sig.tail(10))
+    # 创建测试数据：先上涨后下跌的价格序列
+    dates = pd.date_range("2024-01-01", periods=60, freq="B")
+    prices = np.concatenate([
+        np.linspace(10, 12, 30),  # 上涨阶段
+        np.linspace(12, 11, 30)   # 下跌阶段
+    ])
+    
+    test_df = pd.DataFrame({"close": prices}, index=dates)
+    
+    # 测试不同参数组合
+    print("=== 双均线交叉策略测试 ===")
+    
+    # 基础测试
+    signals = sma_cross(test_df, fast=5, slow=20, mode="regime")
+    print(f"\n基础信号 (regime模式):\n{signals.tail(10)}")
+    
+    # 脉冲模式测试
+    pulse_signals = sma_cross(test_df, fast=5, slow=20, mode="on_cross")
+    print(f"\n脉冲信号 (on_cross模式):\n{pulse_signals.tail(10)}")
+    
+    # 仅做多模式测试
+    long_only_signals = sma_cross(test_df, fast=5, slow=20, long_only=True)
+    print(f"\n仅做多信号:\n{long_only_signals.tail(10)}")
+    
+    print(f"\n信号统计:")
+    print(f"总信号数: {len(signals)}")
+    print(f"买入信号: {(signals == 1).sum()}")
+    print(f"卖出信号: {(signals == -1).sum()}")
+    print(f"持有信号: {(signals == 0).sum()}")
