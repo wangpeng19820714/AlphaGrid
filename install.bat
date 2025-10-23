@@ -1,4 +1,5 @@
 @echo off
+chcp 65001 >nul
 REM AlphaGrid 量化交易回测系统 - Windows 安装脚本
 REM 使用方法: 双击运行 install.bat 或在命令行中执行
 
