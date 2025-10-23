@@ -1,14 +1,10 @@
 @echo off
 chcp 65001 >nul
 REM AlphaGrid 简化安装脚本 - Windows
-REM 使用方法: 从项目根目录运行 scripts\install-simple.bat
 
 echo.
 echo 🚀 AlphaGrid 安装程序
 echo ====================
-
-REM 切换到项目根目录
-cd /d "%~dp0\.."
 
 REM 检查 Python
 python --version >nul 2>&1
@@ -25,7 +21,7 @@ REM 安装依赖
 echo.
 echo 📦 安装依赖包...
 python -m pip install --upgrade pip
-python -m pip install -r requirements\requirements.txt
+python -m pip install -r requirements.txt
 
 REM 创建目录
 mkdir quant\data 2>nul
@@ -34,6 +30,5 @@ mkdir quant\reports 2>nul
 
 echo.
 echo ✅ 安装完成！
-echo 运行: scripts\run.bat
-echo 或: cd quant ^&^& python run_backtest.py
+echo 运行: cd quant ^&^& python run_backtest.py
 pause
