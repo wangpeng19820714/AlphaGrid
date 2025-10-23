@@ -92,23 +92,23 @@ def print_results(results: dict) -> None:
     print("="*50)
     
     # 核心指标
-    print(f"💰 总盈亏:     {results['TotalPnL']:>12,.2f}")
-    print(f"📈 年化收益:   {results['CAGR']:>12.2%}")
-    print(f"📊 夏普比率:   {results['Sharpe']:>12.2f}")
-    print(f"📉 年化波动:   {results['AnnVol']:>12.2%}")
-    print(f"⬇️  最大回撤:   {results['MaxDD']:>12,.2f}")
-    print(f"📊 回撤比例:   {results['MaxDDPct']:>12.2%}")
+    print(f"💰 总盈亏:     {results['总盈亏']:>12,.2f}")
+    print(f"📈 年化收益:   {results['年化收益率']:>12.2%}")
+    print(f"📊 夏普比率:   {results['夏普比率']:>12.2f}")
+    print(f"📉 年化波动:   {results['年化波动率']:>12.2%}")
+    print(f"⬇️  最大回撤:   {results['最大回撤']:>12,.2f}")
+    print(f"📊 回撤比例:   {results['最大回撤比例']:>12.2%}")
     
     # 交易统计
-    print(f"\n📈 盈利天数:   {results['Days>0']:>12}")
-    print(f"📉 亏损天数:   {results['Days<0']:>12}")
-    print(f"🎯 胜率:       {results['WinRate(Day)']:>12.2%}")
-    print(f"💵 平均盈利:   {results['AvgWin(Day)']:>12,.2f}")
-    print(f"💸 平均亏损:   {results['AvgLoss(Day)']:>12,.2f}")
+    print(f"\n📈 盈利天数:   {results['盈利天数']:>12}")
+    print(f"📉 亏损天数:   {results['亏损天数']:>12}")
+    print(f"🎯 胜率:       {results['胜率(按天)']:>12.2%}")
+    print(f"💵 平均盈利:   {results['平均盈利(按天)']:>12,.2f}")
+    print(f"💸 平均亏损:   {results['平均亏损(按天)']:>12,.2f}")
     
     # 回撤期间
-    if results['DD_Start'] and results['DD_End']:
-        print(f"\n📅 最大回撤期间: {results['DD_Start']} 至 {results['DD_End']}")
+    if results['回撤开始日期'] and results['回撤结束日期']:
+        print(f"\n📅 最大回撤期间: {results['回撤开始日期']} 至 {results['回撤结束日期']}")
     
     print("="*50)
 
