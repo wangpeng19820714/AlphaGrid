@@ -1,8 +1,11 @@
 #!/bin/bash
 # AlphaGrid 量化交易回测系统 - Mac/Linux 安装脚本
-# 使用方法: chmod +x install.sh && ./install.sh
+# 使用方法: 从项目根目录运行 ./scripts/install.sh
 
 set -e  # 遇到错误立即退出
+
+# 切换到脚本所在目录的父目录（项目根目录）
+cd "$(dirname "$0")/.."
 
 echo "🚀 AlphaGrid 量化交易回测系统安装程序"
 echo "================================================"
@@ -56,51 +59,51 @@ read -p "请输入选择 (1-4): " choice
 case $choice in
     1)
         echo "🔧 执行最小安装..."
-        if [ -f "requirements-minimal.txt" ]; then
-            python3 -m pip install -r requirements-minimal.txt
+        if [ -f "requirements/requirements-minimal.txt" ]; then
+            python3 -m pip install -r requirements/requirements-minimal.txt
             echo "✅ 最小依赖包安装完成"
         else
-            echo "❌ 错误: 未找到 requirements-minimal.txt 文件"
+            echo "❌ 错误: 未找到 requirements/requirements-minimal.txt 文件"
             exit 1
         fi
         ;;
     2)
         echo "🔧 执行完整安装..."
-        if [ -f "requirements.txt" ]; then
-            python3 -m pip install -r requirements.txt
+        if [ -f "requirements/requirements.txt" ]; then
+            python3 -m pip install -r requirements/requirements.txt
             echo "✅ 完整依赖包安装完成"
         else
-            echo "❌ 错误: 未找到 requirements.txt 文件"
+            echo "❌ 错误: 未找到 requirements/requirements.txt 文件"
             exit 1
         fi
         ;;
     3)
         echo "🔧 执行生产环境安装..."
-        if [ -f "requirements-prod.txt" ]; then
-            python3 -m pip install -r requirements-prod.txt
+        if [ -f "requirements/requirements-prod.txt" ]; then
+            python3 -m pip install -r requirements/requirements-prod.txt
             echo "✅ 生产环境依赖包安装完成"
         else
-            echo "❌ 错误: 未找到 requirements-prod.txt 文件"
+            echo "❌ 错误: 未找到 requirements/requirements-prod.txt 文件"
             exit 1
         fi
         ;;
     4)
         echo "🔧 执行开发环境安装..."
-        if [ -f "requirements-dev.txt" ]; then
-            python3 -m pip install -r requirements-dev.txt
+        if [ -f "requirements/requirements-dev.txt" ]; then
+            python3 -m pip install -r requirements/requirements-dev.txt
             echo "✅ 开发环境依赖包安装完成"
         else
-            echo "❌ 错误: 未找到 requirements-dev.txt 文件"
+            echo "❌ 错误: 未找到 requirements/requirements-dev.txt 文件"
             exit 1
         fi
         ;;
     *)
         echo "⚠️  无效选择，使用默认完整安装..."
-        if [ -f "requirements.txt" ]; then
-            python3 -m pip install -r requirements.txt
+        if [ -f "requirements/requirements.txt" ]; then
+            python3 -m pip install -r requirements/requirements.txt
             echo "✅ 依赖包安装完成"
         else
-            echo "❌ 错误: 未找到 requirements.txt 文件"
+            echo "❌ 错误: 未找到 requirements/requirements.txt 文件"
             exit 1
         fi
         ;;
@@ -114,6 +117,7 @@ mkdir -p quant/reports
 
 # 设置执行权限
 echo "🔧 设置执行权限..."
+chmod +x scripts/run.sh
 chmod +x quant/run_backtest.py
 
 # 验证安装
@@ -130,8 +134,11 @@ echo ""
 echo "🎉 安装完成！"
 echo "================================================"
 echo "📖 使用方法:"
+echo "   ./scripts/run.sh"
+echo ""
+echo "   或手动运行:"
 echo "   cd quant"
 echo "   python3 run_backtest.py"
 echo ""
-echo "📚 更多信息请查看 README.md"
+echo "📚 更多信息请查看 docs/INSTALL.md"
 echo "================================================"

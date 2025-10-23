@@ -1,11 +1,14 @@
 @echo off
 chcp 65001 >nul
 REM AlphaGrid 量化交易回测系统 - Windows 安装脚本
-REM 使用方法: 双击运行 install.bat 或在命令行中执行
+REM 使用方法: 从项目根目录运行 scripts\install.bat
 
 echo.
 echo 🚀 AlphaGrid 量化交易回测系统安装程序
 echo ================================================
+
+REM 切换到项目根目录
+cd /d "%~dp0\.."
 
 REM 检查 Python 是否安装
 python --version >nul 2>&1
@@ -53,8 +56,8 @@ set /p choice=请输入选择 (1-4):
 
 if "%choice%"=="1" (
     echo 🔧 执行最小安装...
-    if exist "requirements-minimal.txt" (
-        python -m pip install -r requirements-minimal.txt
+    if exist "requirements\requirements-minimal.txt" (
+        python -m pip install -r requirements\requirements-minimal.txt
         if errorlevel 1 (
             echo ❌ 最小依赖包安装失败
             pause
@@ -62,14 +65,14 @@ if "%choice%"=="1" (
         )
         echo ✅ 最小依赖包安装完成
     ) else (
-        echo ❌ 错误: 未找到 requirements-minimal.txt 文件
+        echo ❌ 错误: 未找到 requirements\requirements-minimal.txt 文件
         pause
         exit /b 1
     )
 ) else if "%choice%"=="2" (
     echo 🔧 执行完整安装...
-    if exist "requirements.txt" (
-        python -m pip install -r requirements.txt
+    if exist "requirements\requirements.txt" (
+        python -m pip install -r requirements\requirements.txt
         if errorlevel 1 (
             echo ❌ 完整依赖包安装失败
             pause
@@ -77,14 +80,14 @@ if "%choice%"=="1" (
         )
         echo ✅ 完整依赖包安装完成
     ) else (
-        echo ❌ 错误: 未找到 requirements.txt 文件
+        echo ❌ 错误: 未找到 requirements\requirements.txt 文件
         pause
         exit /b 1
     )
 ) else if "%choice%"=="3" (
     echo 🔧 执行生产环境安装...
-    if exist "requirements-prod.txt" (
-        python -m pip install -r requirements-prod.txt
+    if exist "requirements\requirements-prod.txt" (
+        python -m pip install -r requirements\requirements-prod.txt
         if errorlevel 1 (
             echo ❌ 生产环境依赖包安装失败
             pause
@@ -92,14 +95,14 @@ if "%choice%"=="1" (
         )
         echo ✅ 生产环境依赖包安装完成
     ) else (
-        echo ❌ 错误: 未找到 requirements-prod.txt 文件
+        echo ❌ 错误: 未找到 requirements\requirements-prod.txt 文件
         pause
         exit /b 1
     )
 ) else if "%choice%"=="4" (
     echo 🔧 执行开发环境安装...
-    if exist "requirements-dev.txt" (
-        python -m pip install -r requirements-dev.txt
+    if exist "requirements\requirements-dev.txt" (
+        python -m pip install -r requirements\requirements-dev.txt
         if errorlevel 1 (
             echo ❌ 开发环境依赖包安装失败
             pause
@@ -107,14 +110,14 @@ if "%choice%"=="1" (
         )
         echo ✅ 开发环境依赖包安装完成
     ) else (
-        echo ❌ 错误: 未找到 requirements-dev.txt 文件
+        echo ❌ 错误: 未找到 requirements\requirements-dev.txt 文件
         pause
         exit /b 1
     )
 ) else (
     echo ⚠️  无效选择，使用默认完整安装...
-    if exist "requirements.txt" (
-        python -m pip install -r requirements.txt
+    if exist "requirements\requirements.txt" (
+        python -m pip install -r requirements\requirements.txt
         if errorlevel 1 (
             echo ❌ 依赖包安装失败
             pause
@@ -122,7 +125,7 @@ if "%choice%"=="1" (
         )
         echo ✅ 依赖包安装完成
     ) else (
-        echo ❌ 错误: 未找到 requirements.txt 文件
+        echo ❌ 错误: 未找到 requirements\requirements.txt 文件
         pause
         exit /b 1
     )
@@ -152,10 +155,13 @@ echo.
 echo 🎉 安装完成！
 echo ================================================
 echo 📖 使用方法:
+echo    scripts\run.bat
+echo.
+echo    或手动运行:
 echo    cd quant
 echo    python run_backtest.py
 echo.
-echo 📚 更多信息请查看 README.md
+echo 📚 更多信息请查看 docs\INSTALL.md
 echo ================================================
 echo.
 pause
