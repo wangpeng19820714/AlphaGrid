@@ -1,4 +1,5 @@
 @echo off
+chcp 65001 >nul
 REM AlphaGrid 简化安装脚本 - Windows
 
 echo.
