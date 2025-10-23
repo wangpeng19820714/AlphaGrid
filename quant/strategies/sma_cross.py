@@ -55,8 +55,10 @@ def sma_cross(
 
     if mode == "regime":
         # 状态型：用最后一个非零值前向填充；起始NaN/未成熟区间仍为0
-        regime = regime.replace(0, pd.NA).ffill().fillna(0)
-        regime = regime.infer_objects(copy=False).astype(int)
+        regime = regime.replace(0, pd.NA)
+        regime = regime.ffill()
+        # 直接使用整数填充，避免 fillna 的类型转换警告
+        regime = regime.where(regime.notna(), 0).astype(int)
     elif mode == "on_cross":
         # 脉冲型：仅在穿越当日给信号（从 <=0 到 >0 记 +1；从 >=0 到 <0 记 -1）
         sign_now = regime
