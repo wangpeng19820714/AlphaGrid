@@ -1,42 +1,53 @@
-# run_backtest_portfolio.py（示例脚本）
-import sys
-import os
-
-# 添加父目录到路径以便导入 engine 模块
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
-
-# 设置标准输出编码为 UTF-8（解决 Windows 中文乱码问题）
-if sys.platform == 'win32':
-    import io
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
-
+# run_backtest_portfolio.py
+"""投资组合回测脚本"""
+from test_base import print_header, print_summary, print_footer
 from engine.data import MultiOHLCVDataset
 from engine.risk import rebalance_to_weights_orders
 from engine.backtest import run_close_fill_portfolio
 from engine.metrics import summary
+from config_manager import get_config
 import pandas as pd
 
-# 1) 读多标的数据（目录下若有 000001.SZ.csv / 600000.SH.csv / 510300.SH.csv ...）
-ds = MultiOHLCVDataset(dir_path="data", symbols=["000001.SZ","600000.SH","510300.SH"])
-df = ds.get()  # MultiIndex (symbol, date)
+# 加载配置
+config = get_config()
 
-# 2) 设定每日目标权重（示例：等权三只，权重=1/3）
+# 1) 读取多标的数据
+ds = MultiOHLCVDataset(
+    dir_path=config.path.data_dir,
+    symbols=["000001.SZ", "600000.SH", "510300.SH"]
+)
+df = ds.get()
+
+# 2) 设定每日目标权重：等权配置
 dates = df.index.get_level_values("date").unique()
-symbols = ["000001.SZ","600000.SH","510300.SH"]
+symbols = ["000001.SZ", "600000.SH", "510300.SH"]
 w = pd.DataFrame(1/3, index=dates, columns=symbols)
 
-# 3) 生成组合 orders（目标权重→股数变化）
-orders = rebalance_to_weights_orders(df_prices=df, target_weights=w, capital=1_000_000, lot_size=1)
+# 3) 生成组合 orders
+orders = rebalance_to_weights_orders(
+    df_prices=df,
+    target_weights=w,
+    capital=config.backtest.capital,
+    lot_size=config.backtest.lot_size
+)
 
-# 4) 组合回测（收盘成交 + 费用/滑点）
-res = run_close_fill_portfolio(df, orders, fee_bp=10, slip_bp=2, tax_bp_sell=0)
+# 4) 组合回测
+res = run_close_fill_portfolio(
+    df, orders,
+    fee_bp=config.backtest.fee_bp,
+    slip_bp=config.backtest.slip_bp,
+    tax_bp_sell=config.backtest.tax_bp_sell
+)
 
-# 5) 绩效（用组合日度 PnL 汇总）
-smry = summary(res.portfolio_pnl, capital=1_000_000, rf_annual=0.02)
-print("=" * 50)
-print("📊 投资组合绩效报告")
-print("=" * 50)
-for k, v in smry.items():
-    print(f"{k}: {v}")
-print("=" * 50)
+# 5) 绩效分析
+smry = summary(
+    res.portfolio_pnl,
+    capital=config.backtest.capital,
+    rf_annual=config.backtest.rf_annual
+)
+
+# 6) 输出结果
+print_header("投资组合绩效报告")
+print_summary(smry)
+print_footer()
+

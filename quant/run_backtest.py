@@ -9,10 +9,7 @@
 """
 
 import sys
-import os
 from pathlib import Path
-from typing import Optional
-
 import pandas as pd
 
 # 设置标准输出编码为 UTF-8（解决 Windows 中文乱码问题）
@@ -25,6 +22,7 @@ from engine.data import OHLCVDataset
 from engine.backtest import run_vector_bt
 from engine.metrics import summary
 from strategies.sma_cross import sma_cross
+from config_manager import get_config
 
 
 def load_data(data_path: str) -> pd.DataFrame:
@@ -39,43 +37,46 @@ def load_data(data_path: str) -> pd.DataFrame:
 
 def generate_signals(df: pd.DataFrame) -> tuple[pd.Series, pd.Series]:
     """生成交易信号和仓位"""
+    config = get_config()
+    
     # 生成SMA交叉信号
     signals = sma_cross(
         df, 
-        fast=10, 
-        slow=30, 
-        mode="regime", 
-        band_bp=5.0, 
-        long_only=False, 
-        delay=1
+        fast=config.strategy.fast_period,
+        slow=config.strategy.slow_period,
+        mode="regime",
+        band_bp=config.strategy.band_bp,
+        long_only=config.strategy.long_only,
+        delay=config.strategy.delay
     )
     
     # 简单的仓位管理：信号强度 * 固定股数
-    position_size = 1000  # 每次交易1000股
-    shares = signals * position_size
+    shares = signals * config.backtest.position_size
     
     return signals, shares
 
 
 def run_backtest(df: pd.DataFrame, signals: pd.Series, shares: pd.Series) -> dict:
     """执行回测并返回结果"""
+    config = get_config()
+    
     try:
         # 执行向量化回测
         daily_pnl, position, fills, trade_price, fees, taxes = run_vector_bt(
             df=df,
             signal=signals,
             sizer_shares=shares,
-            fee_bp=10.0,    # 10个基点手续费
-            slip_bp=2.0,    # 2个基点滑点
-            tax_bp_sell=0.0 # 无印花税
+            fee_bp=config.backtest.fee_bp,
+            slip_bp=config.backtest.slip_bp,
+            tax_bp_sell=config.backtest.tax_bp_sell
         )
         
         # 计算绩效指标
         results = summary(
             daily_pnl=daily_pnl,
-            capital=1_000_000,  # 100万初始资金
-            rf_annual=0.02,     # 2%年化无风险利率
-            trading_days=252    # 年化交易日数
+            capital=config.backtest.capital,
+            rf_annual=config.backtest.rf_annual,
+            trading_days=config.backtest.trading_days
         )
         
         return results
