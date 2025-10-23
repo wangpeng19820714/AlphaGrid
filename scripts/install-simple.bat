@@ -21,7 +21,7 @@ REM 安装依赖
 echo.
 echo 📦 安装依赖包...
 python -m pip install --upgrade pip
-python -m pip install -r requirements.txt
+python -m pip install -r requirements\requirements-minimal.txt
 
 REM 创建目录
 mkdir quant\data 2>nul

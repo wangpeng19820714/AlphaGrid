@@ -8,17 +8,17 @@
 
 #### 最小安装（推荐）
 ```bash
-pip install -r requirements-minimal.txt
+pip install -r requirements/requirements-minimal.txt
 ```
 
 #### 完整安装
 ```bash
-pip install -r requirements.txt
+pip install -r requirements/requirements.txt
 ```
 
 #### 开发环境安装
 ```bash
-pip install -r requirements-dev.txt
+pip install -r requirements/requirements-dev.txt
 ```
 
 ### 运行回测
@@ -27,6 +27,20 @@ pip install -r requirements-dev.txt
 cd quant
 python3 run_backtest.py
 ```
+
+### 更新依赖文件
+
+项目提供了自动更新requirements的工具：
+
+```bash
+# Windows
+python scripts/update_requirements.py --yes
+
+# Linux/Mac  
+python scripts/update_requirements.py --yes
+```
+
+详细使用说明请参考 [Requirements工具文档](docs/REQUIREMENTS_TOOLS.md)
 
 ## 📦 依赖说明
 
@@ -54,9 +68,12 @@ AlphaGrid/
 │   │   └── sma_cross.py    # SMA交叉策略
 │   └── run_backtest.py     # 主运行脚本
 ├── data/                    # 数据目录
-├── requirements.txt         # 完整依赖
-├── requirements-minimal.txt # 最小依赖
-└── requirements-dev.txt     # 开发依赖
+├── requirements/            # 依赖配置
+│   ├── requirements.txt         # 完整依赖
+│   ├── requirements-minimal.txt # 最小依赖
+│   ├── requirements-prod.txt    # 生产依赖
+│   └── requirements-dev.txt     # 开发依赖
+└── scripts/                 # 工具脚本
 ```
 
 ## 🔧 功能特性

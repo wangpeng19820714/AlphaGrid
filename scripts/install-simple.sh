@@ -15,7 +15,7 @@ echo "✅ Python 已安装: $(python3 --version)"
 # 安装依赖
 echo "📦 安装依赖包..."
 python3 -m pip install --upgrade pip
-python3 -m pip install -r requirements.txt
+python3 -m pip install -r requirements/requirements-minimal.txt
 
 # 创建目录
 mkdir -p quant/data quant/cache quant/reports
