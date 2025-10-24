@@ -30,7 +30,7 @@ script_dir = Path(__file__).resolve().parent
 project_root = script_dir.parent.parent  # quant/scripts -> quant -> project_root
 sys.path.insert(0, str(project_root))
 
-from quant.storage.parquet_store import ParquetYearWriter, StoreConfig
+from quant.storage.stores import ParquetYearWriter, StoreConfig  # 更新为 stores/ 模块
 
 # ========== 常量定义 ==========
 REQUIRED_COLUMNS = ["date", "open", "high", "low", "close", "volume"]

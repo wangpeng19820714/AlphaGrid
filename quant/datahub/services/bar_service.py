@@ -1,11 +1,13 @@
-# quant/datahub/service.py
-"""历史数据服务 - 统一数据导入、存储、查询接口"""
+# quant/datahub/services/bar_service.py
+"""K线数据服务"""
 from __future__ import annotations
-from typing import Iterable, Optional, Dict
+from typing import Iterable, Optional
 import pandas as pd
 
-from .types import BarData, Exchange, Interval, bars_to_df, df_to_bars
-from .db import BaseDatabase, ParquetDatabase
+from ..types import BarData, Exchange, Interval, bars_to_df, df_to_bars
+from ..db import BaseDatabase, ParquetDatabase
+from .base import BaseDataService
+
 
 # 重采样规则映射
 RESAMPLE_RULES = {
@@ -19,29 +21,56 @@ RESAMPLE_RULES = {
 }
 
 
-class HistoricalDataService:
-    """历史数据服务门面类"""
+class BarDataService(BaseDataService):
+    """
+    K线数据服务
+    
+    提供K线数据的导入、存储、查询、重采样和复权功能
+    """
     
     def __init__(self, db: Optional[BaseDatabase] = None):
         """
-        初始化服务
+        初始化K线数据服务
         
         Args:
             db: 数据库实例，默认使用ParquetDatabase
         """
+        super().__init__()
         self.db = db or ParquetDatabase()
-
+    
     # ========== 持久化 ==========
     def save_bars(self, bars: Iterable[BarData]) -> int:
-        """保存K线数据"""
+        """
+        保存K线数据
+        
+        Args:
+            bars: K线数据列表
+            
+        Returns:
+            保存的记录数
+        """
         return self.db.save_bars(list(bars))
-
+    
     def load_bars(self, symbol: str, exchange: Exchange, interval: Interval,
                   start: Optional[pd.Timestamp] = None,
                   end: Optional[pd.Timestamp] = None) -> list[BarData]:
-        """加载K线数据"""
+        """
+        加载K线数据
+        
+        Args:
+            symbol: 股票代码
+            exchange: 交易所
+            interval: 时间周期
+            start: 开始时间（可选）
+            end: 结束时间（可选）
+            
+        Returns:
+            K线数据列表
+        """
+        symbol = self._validate_symbol(symbol)
+        self._validate_date_range(start, end)
         return self.db.load_bars(symbol, exchange, interval, start, end)
-
+    
     # ========== 导入数据 ==========
     def import_from_provider(self, provider, symbol: str, exchange: Exchange,
                            interval: Interval, start: pd.Timestamp, end: pd.Timestamp,
@@ -56,17 +85,29 @@ class HistoricalDataService:
             interval: 时间周期
             start: 开始日期
             end: 结束日期
-            adjust: 复权类型
+            adjust: 复权类型 ('none', 'qfq', 'hfq')
             
         Returns:
             导入的记录数
         """
+        symbol = self._validate_symbol(symbol)
+        self._validate_date_range(start, end)
+        
         bars = provider.query_bars(symbol, exchange, interval, start, end, adjust)
         return self.save_bars(bars)
-
+    
     # ========== 重采样 ==========
     def _resample_ohlcv(self, df: pd.DataFrame, rule: str) -> pd.DataFrame:
-        """重采样OHLCV数据"""
+        """
+        重采样OHLCV数据
+        
+        Args:
+            df: 原始DataFrame（index为datetime）
+            rule: 重采样规则（如 '1D', '1W'）
+            
+        Returns:
+            重采样后的DataFrame
+        """
         agg_dict = {
             "open": "first",
             "high": "max",
@@ -90,7 +131,7 @@ class HistoricalDataService:
         
         resampled = df.resample(rule).agg(agg_dict)
         return resampled.dropna(subset=["open", "high", "low", "close"], how="any")
-
+    
     def resample(self, bars: list[BarData], to: Interval) -> list[BarData]:
         """
         重采样K线数据
@@ -101,6 +142,9 @@ class HistoricalDataService:
             
         Returns:
             重采样后的K线数据
+            
+        Raises:
+            ValueError: 如果不支持目标周期
         """
         if not bars:
             return []
@@ -126,7 +170,7 @@ class HistoricalDataService:
         # 转换回BarData
         result_df = resampled_df.reset_index()
         return df_to_bars(result_df, symbol, exchange, to)
-
+    
     # ========== 复权 ==========
     def apply_adjust(self, bars: list[BarData],
                     factor_series: Optional[pd.Series] = None) -> list[BarData]:
@@ -160,4 +204,43 @@ class HistoricalDataService:
             bars[0].exchange,
             bars[0].interval
         )
+    
+    # ========== 便捷方法 ==========
+    def get_latest_bar(self, symbol: str, exchange: Exchange, 
+                      interval: Interval) -> Optional[BarData]:
+        """
+        获取最新K线
+        
+        Args:
+            symbol: 股票代码
+            exchange: 交易所
+            interval: 时间周期
+            
+        Returns:
+            最新的K线数据，如果不存在则返回None
+        """
+        bars = self.load_bars(symbol, exchange, interval)
+        return bars[-1] if bars else None
+    
+    def get_bars_between(self, symbol: str, exchange: Exchange,
+                        interval: Interval, start: pd.Timestamp,
+                        end: pd.Timestamp) -> list[BarData]:
+        """
+        获取指定时间范围的K线
+        
+        Args:
+            symbol: 股票代码
+            exchange: 交易所
+            interval: 时间周期
+            start: 开始时间
+            end: 结束时间
+            
+        Returns:
+            K线数据列表
+        """
+        return self.load_bars(symbol, exchange, interval, start, end)
+
+
+# 向后兼容：保留原名称
+HistoricalDataService = BarDataService
 
