@@ -45,6 +45,18 @@ from .fundamental_store import (
     FundamentalStore,
 )
 
+# ========== 分钟线数据存储 ==========
+from .minute_store import (
+    MinuteStore,
+    MinuteReader,
+    load_multi_minutes,
+    get_minute_store,
+    # 向后兼容别名
+    MinuteDataStore,
+    MinuteDataReader,
+    load_multi_minute,
+)
+
 # ========== 导出清单 ==========
 __all__ = [
     # 配置和基础类
@@ -81,5 +93,16 @@ __all__ = [
     
     # 基本面存储
     "FundamentalStore",
+    
+    # 分钟线存储
+    "MinuteStore",
+    "MinuteReader",
+    "load_multi_minutes",
+    "get_minute_store",
+    
+    # 向后兼容
+    "MinuteDataStore",
+    "MinuteDataReader",
+    "load_multi_minute",
 ]
 

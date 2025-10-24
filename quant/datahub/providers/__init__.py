@@ -7,12 +7,14 @@ from .base import BaseProvider
 from .akshare_provider import AkshareProvider
 from .tushare_provider import TuShareProvider
 from .yfinance_provider import YFProvider
+from .minute_provider import MinuteProvider
 
 # 提供者注册表
 PROVIDERS = {
     "akshare": AkshareProvider,
     "tushare": TuShareProvider,
     "yfinance": YFProvider,
+    "minute": MinuteProvider,
 }
 
 def get_provider(name: str, **kwargs) -> BaseProvider:
@@ -39,6 +41,7 @@ __all__ = [
     'AkshareProvider',
     'TuShareProvider',
     'YFProvider',
+    'MinuteProvider',
     'get_provider',
     'PROVIDERS',
 ]

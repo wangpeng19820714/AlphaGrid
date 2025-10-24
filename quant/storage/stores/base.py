@@ -72,8 +72,14 @@ class ManifestIndex:
     def _read_file_metadata(self, file_path: Path) -> Optional[Dict]:
         """读取单个parquet文件的元数据"""
         try:
-            table = pq.read_table(file_path, columns=["date"])
-            dates = pd.to_datetime(table.column(0).to_pandas())
+            # 尝试读取date列，如果失败则读取datetime列
+            try:
+                table = pq.read_table(file_path, columns=["date"])
+                dates = pd.to_datetime(table.column(0).to_pandas())
+            except:
+                table = pq.read_table(file_path, columns=["datetime"])
+                dates = pd.to_datetime(table.column(0).to_pandas())
+            
             return {
                 "name": file_path.name,
                 "start": str(dates.min().date()),
