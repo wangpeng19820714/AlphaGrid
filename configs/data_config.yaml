@@ -22,7 +22,7 @@ layers:
 
   sector:                        # level2_sector：行业代表池（日更）
     path: level2_sector
-    symbols_file: quant/configs/sector_symbols.txt   # 修正路径
+    symbols_file: configs/sector_symbols.txt   # 修正路径
     symbols: []                               # 也可直接写在列表中
 
   full:                          # level3_full：全市场（建议周更）
