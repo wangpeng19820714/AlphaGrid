@@ -19,7 +19,7 @@ Stores 模块提供了 AlphaGrid 数据层的持久化存储功能，负责将 K
 ## 📁 模块结构
 
 ```
-qp/stores/
+qp/data/stores/
 ├── __init__.py                  # 统一导出接口
 ├── base.py                      # 基础类和工具函数
 ├── bar_store.py                # K线数据存储

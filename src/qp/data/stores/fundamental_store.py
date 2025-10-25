@@ -1,4 +1,4 @@
-# qp/stores/fundamental_store.py
+# qp/data/stores/fundamental_store.py
 """基本面数据存储模块"""
 from __future__ import annotations
 from pathlib import Path

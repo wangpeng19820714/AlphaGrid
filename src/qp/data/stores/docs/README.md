@@ -486,7 +486,7 @@ def safe_append(store, exchange, symbol, interval, df):
 ## 📁 模块结构
 
 ```
-qp/stores/
+qp/data/stores/
 ├── __init__.py                  # 统一导出接口
 ├── base.py                      # 基础类和工具
 ├── bar_store.py                # K线存储

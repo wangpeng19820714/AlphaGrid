@@ -1,4 +1,4 @@
-# qp/stores/bar_store.py
+# qp/data/stores/bar_store.py
 """K线数据存储模块"""
 from __future__ import annotations
 import os

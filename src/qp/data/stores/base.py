@@ -1,4 +1,4 @@
-# qp/stores/base.py
+# qp/data/stores/base.py
 """存储层基础类和工具函数"""
 from __future__ import annotations
 import os

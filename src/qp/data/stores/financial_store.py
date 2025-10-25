@@ -1,4 +1,4 @@
-# qp/stores/financial_store.py
+# qp/data/stores/financial_store.py
 """财务数据存储模块"""
 from __future__ import annotations
 from pathlib import Path
