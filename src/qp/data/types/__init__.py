@@ -67,6 +67,24 @@ from .derivative import (
     DERIVATIVE_DTYPES,
 )
 
+# ========== 第三方数据相关 ==========
+from .third_party import (
+    # 枚举类型
+    IndexType, IndustryLevel, IndustryStandard, MacroDataType, DataFrequency,
+    
+    # 数据类
+    IndexComponentData, IndustryClassificationData, MacroData,
+    
+    # 转换函数
+    index_components_to_df, df_to_index_components,
+    industry_classifications_to_df, df_to_industry_classifications,
+    macro_data_to_df, df_to_macro_data,
+    
+    # 常量
+    INDEX_COMPONENT_COLUMNS, INDUSTRY_CLASSIFICATION_COLUMNS, MACRO_DATA_COLUMNS,
+    THIRD_PARTY_DTYPES,
+)
+
 # ========== 导出清单 ==========
 __all__ = [
     # 共享类型
@@ -116,5 +134,20 @@ __all__ = [
     "ANNOUNCEMENT_COLUMNS", "NEWS_SENTIMENT_COLUMNS", "RESEARCH_REPORT_COLUMNS",
     "CAPITAL_FLOW_COLUMNS", "THEME_COLUMNS", "DRAGON_TIGER_COLUMNS",
     "DERIVATIVE_DTYPES",
+    
+    # 第三方数据 - 枚举类型
+    "IndexType", "IndustryLevel", "IndustryStandard", "MacroDataType", "DataFrequency",
+    
+    # 第三方数据 - 数据类
+    "IndexComponentData", "IndustryClassificationData", "MacroData",
+    
+    # 第三方数据 - 转换函数
+    "index_components_to_df", "df_to_index_components",
+    "industry_classifications_to_df", "df_to_industry_classifications",
+    "macro_data_to_df", "df_to_macro_data",
+    
+    # 第三方数据 - 常量
+    "INDEX_COMPONENT_COLUMNS", "INDUSTRY_CLASSIFICATION_COLUMNS", "MACRO_DATA_COLUMNS",
+    "THIRD_PARTY_DTYPES",
 ]
 

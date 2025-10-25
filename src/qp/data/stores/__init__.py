@@ -69,6 +69,15 @@ from .derivative_store import (
     get_derivative_store,
 )
 
+# ========== 第三方数据存储 ==========
+from .third_party_store import (
+    ThirdPartyStore,
+    IndexComponentStore,
+    IndustryClassificationStore,
+    MacroDataStore,
+    get_third_party_store,
+)
+
 # ========== 导出清单 ==========
 __all__ = [
     # 配置和基础类
@@ -126,5 +135,12 @@ __all__ = [
     "ThemeStore",
     "DragonTigerStore",
     "get_derivative_store",
+    
+    # 第三方数据存储
+    "ThirdPartyStore",
+    "IndexComponentStore",
+    "IndustryClassificationStore",
+    "MacroDataStore",
+    "get_third_party_store",
 ]
 

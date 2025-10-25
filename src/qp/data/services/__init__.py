@@ -29,6 +29,9 @@ from .minute_service import MinuteDataService
 # ========== 衍生数据服务 ==========
 from .derivative_service import DerivativeDataService
 
+# ========== 第三方数据服务 ==========
+from .third_party_service import ThirdPartyDataService
+
 
 # ========== 导出清单 ==========
 __all__ = [
@@ -51,5 +54,8 @@ __all__ = [
     
     # 衍生数据服务
     "DerivativeDataService",
+    
+    # 第三方数据服务
+    "ThirdPartyDataService",
 ]
 

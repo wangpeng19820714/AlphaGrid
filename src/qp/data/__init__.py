@@ -37,6 +37,9 @@ AlphaGrid 数据模块统一接口
     financials = get_financials('000001.SZ', '2023-01-01', '2023-12-31')
 """
 
+# ========== 导入类型注解 ==========
+from typing import List, Optional
+
 # ========== 导入所有子模块 ==========
 
 # 数据类型
@@ -56,6 +59,10 @@ from .types import (
     AnnouncementType, NewsSentiment, ReportType, ReportRating,
     FlowType, FlowDirection, ThemeType, DragonTigerType, DragonTigerReason,
     
+    # 第三方数据类型
+    IndexComponentData, IndustryClassificationData, MacroData,
+    IndexType, IndustryLevel, IndustryStandard, MacroDataType, DataFrequency,
+    
     # 工具函数
     bars_to_df,
     df_to_bars,
@@ -69,6 +76,9 @@ from .types import (
     capital_flows_to_df, df_to_capital_flows,
     themes_to_df, df_to_themes,
     dragon_tigers_to_df, df_to_dragon_tigers,
+    index_components_to_df, df_to_index_components,
+    industry_classifications_to_df, df_to_industry_classifications,
+    macro_data_to_df, df_to_macro_data,
 )
 
 # 数据提供者
@@ -81,6 +91,9 @@ from .providers import (
     DerivativeProvider,
     MockDerivativeProvider,
     AkshareDerivativeProvider,
+    ThirdPartyProvider,
+    MockThirdPartyProvider,
+    AkshareThirdPartyProvider,
     get_provider,
     PROVIDERS,
 )
@@ -93,6 +106,7 @@ from .services import (
     FundamentalDataService,
     MinuteDataService,
     DerivativeDataService,
+    ThirdPartyDataService,
     HistoricalDataService,  # 向后兼容
     RESAMPLE_RULES,
 )
@@ -132,6 +146,13 @@ from .stores import (
     ThemeStore,
     DragonTigerStore,
     get_derivative_store,
+    
+    # 第三方数据存储
+    ThirdPartyStore,
+    IndexComponentStore,
+    IndustryClassificationStore,
+    MacroDataStore,
+    get_third_party_store,
 )
 
 # 数据库
@@ -585,6 +606,177 @@ def get_dragon_tigers(symbol: str, start_date: str, end_date: str,
     provider_instance = get_provider(provider, **kwargs)
     return provider_instance.get_dragon_tigers(symbol, start_date, end_date, dragon_tiger_type)
 
+# ========== 第三方数据统一接口函数 ==========
+
+def get_index_components(index_code: str, date: str = None, 
+                        provider: str = 'third_party', **kwargs):
+    """
+    获取指数成分数据
+    
+    Args:
+        index_code: 指数代码
+        date: 查询日期，如果为None则获取最新数据
+        provider: 数据提供者
+        **kwargs: 其他参数
+        
+    Returns:
+        List[IndexComponentData]: 指数成分数据列表
+    """
+    provider_instance = get_provider(provider, **kwargs)
+    return provider_instance.get_index_components(index_code, date)
+
+def get_industry_classifications(symbol: str, industry_standard: str = None,
+                               industry_level: str = None, provider: str = 'third_party', **kwargs):
+    """
+    获取行业分类数据
+    
+    Args:
+        symbol: 股票代码
+        industry_standard: 行业分类标准
+        industry_level: 行业分类级别
+        provider: 数据提供者
+        **kwargs: 其他参数
+        
+    Returns:
+        List[IndustryClassificationData]: 行业分类数据列表
+    """
+    provider_instance = get_provider(provider, **kwargs)
+    return provider_instance.get_industry_classifications(symbol, industry_standard, industry_level)
+
+def get_macro_data(data_code: str, start_date: str, end_date: str,
+                  data_type: str = None, provider: str = 'third_party', **kwargs):
+    """
+    获取宏观数据
+    
+    Args:
+        data_code: 数据代码
+        start_date: 开始日期
+        end_date: 结束日期
+        data_type: 数据类型过滤
+        provider: 数据提供者
+        **kwargs: 其他参数
+        
+    Returns:
+        List[MacroData]: 宏观数据列表
+    """
+    provider_instance = get_provider(provider, **kwargs)
+    return provider_instance.get_macro_data(data_code, start_date, end_date, data_type)
+
+def save_index_components(components: List[IndexComponentData], 
+                         store_config: StoreConfig = None) -> int:
+    """
+    保存指数成分数据
+    
+    Args:
+        components: 指数成分数据列表
+        store_config: 存储配置
+        
+    Returns:
+        int: 保存的记录数
+    """
+    if store_config is None:
+        store_config = StoreConfig(root="data/third_party")
+    
+    store = IndexComponentStore(store_config)
+    return store.save_index_components(components)
+
+def save_industry_classifications(classifications: List[IndustryClassificationData],
+                                 store_config: StoreConfig = None) -> int:
+    """
+    保存行业分类数据
+    
+    Args:
+        classifications: 行业分类数据列表
+        store_config: 存储配置
+        
+    Returns:
+        int: 保存的记录数
+    """
+    if store_config is None:
+        store_config = StoreConfig(root="data/third_party")
+    
+    store = IndustryClassificationStore(store_config)
+    return store.save_industry_classifications(classifications)
+
+def save_macro_data(macro_data: List[MacroData], 
+                   store_config: StoreConfig = None) -> int:
+    """
+    保存宏观数据
+    
+    Args:
+        macro_data: 宏观数据列表
+        store_config: 存储配置
+        
+    Returns:
+        int: 保存的记录数
+    """
+    if store_config is None:
+        store_config = StoreConfig(root="data/third_party")
+    
+    store = MacroDataStore(store_config)
+    return store.save_macro_data(macro_data)
+
+def query_index_components(index_code: str, effective_date: str = None,
+                          store_config: StoreConfig = None) -> List[IndexComponentData]:
+    """
+    查询指数成分数据
+    
+    Args:
+        index_code: 指数代码
+        effective_date: 生效日期
+        store_config: 存储配置
+        
+    Returns:
+        List[IndexComponentData]: 指数成分数据列表
+    """
+    if store_config is None:
+        store_config = StoreConfig(root="data/third_party")
+    
+    store = IndexComponentStore(store_config)
+    return store.load_index_components(index_code, effective_date)
+
+def query_industry_classifications(symbol: str, industry_standard: str = None,
+                                 industry_level: str = None,
+                                 store_config: StoreConfig = None) -> List[IndustryClassificationData]:
+    """
+    查询行业分类数据
+    
+    Args:
+        symbol: 股票代码
+        industry_standard: 行业分类标准
+        industry_level: 行业分类级别
+        store_config: 存储配置
+        
+    Returns:
+        List[IndustryClassificationData]: 行业分类数据列表
+    """
+    if store_config is None:
+        store_config = StoreConfig(root="data/third_party")
+    
+    store = IndustryClassificationStore(store_config)
+    return store.load_industry_classifications(symbol, industry_standard, industry_level)
+
+def query_macro_data(data_code: str, start_date: str = None, end_date: str = None,
+                    data_type: str = None, store_config: StoreConfig = None) -> List[MacroData]:
+    """
+    查询宏观数据
+    
+    Args:
+        data_code: 数据代码
+        start_date: 开始日期
+        end_date: 结束日期
+        data_type: 数据类型过滤
+        store_config: 存储配置
+        
+    Returns:
+        List[MacroData]: 宏观数据列表
+    """
+    if store_config is None:
+        store_config = StoreConfig(root="data/third_party")
+    
+    store = MacroDataStore(store_config)
+    return store.load_macro_data(data_code, start_date, end_date, data_type)
+
 # ========== 导出清单 ==========
 
 __all__ = [
@@ -606,15 +798,23 @@ __all__ = [
     'themes_to_df', 'df_to_themes',
     'dragon_tigers_to_df', 'df_to_dragon_tigers',
     
+    # 第三方数据类型
+    'IndexComponentData', 'IndustryClassificationData', 'MacroData',
+    'IndexType', 'IndustryLevel', 'IndustryStandard', 'MacroDataType', 'DataFrequency',
+    'index_components_to_df', 'df_to_index_components',
+    'industry_classifications_to_df', 'df_to_industry_classifications',
+    'macro_data_to_df', 'df_to_macro_data',
+    
     # 数据提供者
     'BaseProvider', 'AkshareProvider', 'TuShareProvider', 'YFProvider', 
     'MinuteProvider', 'DerivativeProvider', 'MockDerivativeProvider', 'AkshareDerivativeProvider',
+    'ThirdPartyProvider', 'MockThirdPartyProvider', 'AkshareThirdPartyProvider',
     'get_provider', 'PROVIDERS',
     
     # 数据服务
     'BaseDataService', 'BarDataService', 'FinancialDataService', 
     'FundamentalDataService', 'MinuteDataService', 'DerivativeDataService',
-    'HistoricalDataService', 'RESAMPLE_RULES',
+    'ThirdPartyDataService', 'HistoricalDataService', 'RESAMPLE_RULES',
     
     # 数据存储
     'StoreConfig', 'BaseStore', 'ManifestIndex',
@@ -625,6 +825,8 @@ __all__ = [
     'DerivativeDataStore', 'AnnouncementStore', 'NewsSentimentStore',
     'ResearchReportStore', 'CapitalFlowStore', 'ThemeStore', 'DragonTigerStore',
     'get_derivative_store',
+    'ThirdPartyStore', 'IndexComponentStore', 'IndustryClassificationStore',
+    'MacroDataStore', 'get_third_party_store',
     
     # 数据库
     'DataHub', 'get_data_hub',
@@ -637,6 +839,11 @@ __all__ = [
     # 衍生数据接口
     'get_announcements', 'get_news_sentiments', 'get_research_reports',
     'get_capital_flows', 'get_themes', 'get_dragon_tigers',
+    
+    # 第三方数据接口
+    'get_index_components', 'get_industry_classifications', 'get_macro_data',
+    'save_index_components', 'save_industry_classifications', 'save_macro_data',
+    'query_index_components', 'query_industry_classifications', 'query_macro_data',
     
     # 便捷函数
     'quick_bars', 'quick_minute_bars',
