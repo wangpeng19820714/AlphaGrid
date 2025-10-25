@@ -4,14 +4,14 @@
 
 Stores 模块提供高效的本地持久化存储，基于 Parquet 格式管理 K线数据、财务数据和基本面数据。
 
-**模块路径**: `qp/stores/`
+**模块路径**: `qp/data/stores/`
 
 ---
 
 ## 🚀 快速开始
 
 ```python
-from qp.stores import StoreConfig, BarStore
+from qp.datastores import StoreConfig, BarStore
 import pandas as pd
 
 # 1. 创建配置
@@ -64,7 +64,7 @@ print(f"加载 {len(df_loaded)} 条数据")
 **使用示例**:
 
 ```python
-from qp.stores import StoreConfig, BarStore
+from qp.data.stores import StoreConfig, BarStore
 
 store = BarStore(StoreConfig(root="data/bars"))
 
@@ -121,7 +121,7 @@ result = store.query(
 **使用示例**:
 
 ```python
-from qp.stores import StoreConfig, FinancialStore
+from qp.data.stores import StoreConfig, FinancialStore
 
 store = FinancialStore(StoreConfig(root="data/financials"))
 
@@ -184,7 +184,7 @@ df = store.load(
 **使用示例**:
 
 ```python
-from qp.stores import StoreConfig, FundamentalStore
+from qp.data.stores import StoreConfig, FundamentalStore
 
 store = FundamentalStore(StoreConfig(root="data/fundamentals"))
 
@@ -228,7 +228,7 @@ df = store.load(
 ### StoreConfig
 
 ```python
-from qp.stores import StoreConfig
+from qp.data.stores import StoreConfig
 
 # 默认配置
 config = StoreConfig()
@@ -260,7 +260,7 @@ config = StoreConfig(
 ### 场景1：批量导入K线数据
 
 ```python
-from qp.stores import StoreConfig, BarStore
+from qp.data.stores import StoreConfig, BarStore
 
 store = BarStore(StoreConfig(root="data/history"))
 
@@ -276,7 +276,7 @@ for symbol in symbols:
 ### 场景2：财务数据年度对比
 
 ```python
-from qp.stores import StoreConfig, FinancialStore
+from qp.data.stores import StoreConfig, FinancialStore
 
 store = FinancialStore(StoreConfig(root="data/financials"))
 
@@ -294,7 +294,7 @@ print(income[['year', 'revenue', 'net_profit', 'roe', 'revenue_growth']])
 ### 场景3：基本面估值分析
 
 ```python
-from qp.stores import StoreConfig, FundamentalStore
+from qp.data.stores import StoreConfig, FundamentalStore
 
 store = FundamentalStore(StoreConfig(root="data/fundamentals"))
 
@@ -516,11 +516,11 @@ qp/stores/
 
 ```python
 # 新接口（推荐）
-from qp.stores import BarStore
+from qp.data.stores import BarStore
 store = BarStore(config)
 
 # 旧接口（仍然可用）
-from qp.stores import ParquetYearWriter
+from qp.data.stores import ParquetYearWriter
 writer = ParquetYearWriter(config)  # 等同于 BarStore
 ```
 

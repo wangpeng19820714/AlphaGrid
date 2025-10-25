@@ -37,7 +37,7 @@ qp/stores/
 ### 基本导入
 
 ```python
-from qp.stores import (
+from qp.data.stores import (
     # 配置
     StoreConfig,
     
@@ -55,7 +55,7 @@ from qp.stores import (
 ### 简单示例
 
 ```python
-from qp.stores import StoreConfig, BarStore
+from qp.data.stores import StoreConfig, BarStore
 import pandas as pd
 
 # 1. 创建配置
@@ -117,7 +117,7 @@ class StoreConfig:
 **使用示例**:
 
 ```python
-from qp.stores import StoreConfig
+from qp.data.stores import StoreConfig
 
 # 默认配置
 config = StoreConfig()
@@ -163,7 +163,7 @@ print(f"压缩算法: {config.compression}")
 ##### `append()` - 追加数据
 
 ```python
-from qp.stores import StoreConfig, BarStore
+from qp.data.stores import StoreConfig, BarStore
 import pandas as pd
 
 store = BarStore(StoreConfig(root="data/bars"))
@@ -258,7 +258,7 @@ print(result.head())
 ##### `save()` - 保存财务数据
 
 ```python
-from qp.stores import StoreConfig, FinancialStore
+from qp.data.stores import StoreConfig, FinancialStore
 import pandas as pd
 
 store = FinancialStore(StoreConfig(root="data/financials"))
@@ -350,7 +350,7 @@ store.save("600000", "SSE", "indicator", df_indicator)
 ##### `save()` - 保存基本面数据
 
 ```python
-from qp.stores import StoreConfig, FundamentalStore
+from qp.data.stores import StoreConfig, FundamentalStore
 import pandas as pd
 
 store = FundamentalStore(StoreConfig(root="data/fundamentals"))
@@ -409,7 +409,7 @@ print(df[['date', 'pe_ratio', 'pb_ratio', 'roe']].head())
 ### 示例1：K线数据完整工作流
 
 ```python
-from qp.stores import StoreConfig, BarStore
+from qp.data.stores import StoreConfig, BarStore
 import pandas as pd
 import numpy as np
 
@@ -518,7 +518,7 @@ print(f"  波动率: {df_all['return'].std() * np.sqrt(252):.2%}")
 ### 示例2：财务数据管理
 
 ```python
-from qp.stores import StoreConfig, FinancialStore
+from qp.data.stores import StoreConfig, FinancialStore
 import pandas as pd
 
 # ========== 1. 初始化 ==========
@@ -640,7 +640,7 @@ else:
 ### 示例3：基本面数据趋势分析
 
 ```python
-from qp.stores import StoreConfig, FundamentalStore
+from qp.data.stores import StoreConfig, FundamentalStore
 import pandas as pd
 import numpy as np
 
@@ -743,7 +743,7 @@ else:
 Manifest 是元数据索引，记录每个数据文件的时间范围和统计信息。
 
 ```python
-from qp.stores import ManifestIndex
+from qp.data.stores import ManifestIndex
 from pathlib import Path
 
 # 创建 Manifest 管理器
@@ -775,7 +775,7 @@ print("✅ 索引已保存")
 ### 2. 批量数据导入
 
 ```python
-from qp.stores import StoreConfig, BarStore
+from qp.data.stores import StoreConfig, BarStore
 import pandas as pd
 
 store = BarStore(StoreConfig(root="data/history"))
@@ -810,7 +810,7 @@ print("\n批量导入完成！")
 ### 3. 数据迁移
 
 ```python
-from qp.stores import StoreConfig, BarStore
+from qp.data.stores import StoreConfig, BarStore
 
 # 源存储
 src_store = BarStore(StoreConfig(root="data/old_history"))
@@ -857,7 +857,7 @@ print(f"✅ 备份 600000: {dst_symbol}")
 ### 5. 存储空间统计
 
 ```python
-from qp.stores import StoreConfig, BarStore
+from qp.data.stores import StoreConfig, BarStore
 from pathlib import Path
 import os
 

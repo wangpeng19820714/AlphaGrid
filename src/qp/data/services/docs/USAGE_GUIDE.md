@@ -228,7 +228,7 @@ from qp.data.services import (
 )
 from qp.data.providers import get_provider
 from qp.data.types import Exchange, Interval, FinancialReportType
-from quant.storage.stores import StoreConfig, FundamentalStore
+from qp.data.stores import StoreConfig, FundamentalStore
 import pandas as pd
 
 # ========== 准备工作 ==========
@@ -655,7 +655,7 @@ print(f"导出 {len(df)} 条数据到 Parquet")
 财务和基本面服务需要设置存储实例：
 
 ```python
-from quant.storage.stores import StoreConfig, FundamentalStore
+from qp.data.stores import StoreConfig, FundamentalStore
 
 # 初始化存储
 config = StoreConfig(root="data/fundamental_root")

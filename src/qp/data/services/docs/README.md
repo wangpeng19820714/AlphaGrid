@@ -94,7 +94,7 @@ adjusted = service.apply_adjust(bars, factor_series)
 ```python
 from qp.data.services import FinancialDataService
 from qp.data.types import FinancialReportType
-from qp.stores import StoreConfig, FundamentalStore
+from qp.data.stores import StoreConfig, FundamentalStore
 
 # 初始化存储
 config = StoreConfig(root="data/fundamental_root")
@@ -345,7 +345,7 @@ bar_service = BarDataService()
 ### 财务/基本面服务（需要配置存储）
 
 ```python
-from qp.stores import StoreConfig, FundamentalStore
+from qp.data.stores import StoreConfig, FundamentalStore
 
 # 1. 创建存储配置
 config = StoreConfig(root="data/fundamental_root")

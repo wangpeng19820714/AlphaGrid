@@ -1,9 +1,9 @@
-# qp/stores/__init__.py
+# qp/data/stores/__init__.py
 """
 Storage Stores 统一导出
 
 用法：
-    from qp.stores import BarStore, FinancialStore, FundamentalStore
+    from qp.data import BarStore, FinancialStore, FundamentalStore
 """
 
 # ========== 基础类和配置 ==========
