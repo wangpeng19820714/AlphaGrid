@@ -8,6 +8,7 @@ from .akshare_provider import AkshareProvider
 from .tushare_provider import TuShareProvider
 from .yfinance_provider import YFProvider
 from .minute_provider import MinuteProvider
+from .derivative_provider import DerivativeProvider, MockDerivativeProvider, AkshareDerivativeProvider
 
 # 提供者注册表
 PROVIDERS = {
@@ -15,6 +16,8 @@ PROVIDERS = {
     "tushare": TuShareProvider,
     "yfinance": YFProvider,
     "minute": MinuteProvider,
+    "derivative": MockDerivativeProvider,
+    "derivative_akshare": AkshareDerivativeProvider,
 }
 
 def get_provider(name: str, **kwargs) -> BaseProvider:
@@ -42,6 +45,9 @@ __all__ = [
     'TuShareProvider',
     'YFProvider',
     'MinuteProvider',
+    'DerivativeProvider',
+    'MockDerivativeProvider',
+    'AkshareDerivativeProvider',
     'get_provider',
     'PROVIDERS',
 ]

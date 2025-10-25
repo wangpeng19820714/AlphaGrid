@@ -43,6 +43,30 @@ from .fundamental import (
     df_to_fundamentals,
 )
 
+# ========== 衍生数据相关 ==========
+from .derivative import (
+    # 枚举类型
+    AnnouncementType, NewsSentiment, ReportType, ReportRating,
+    FlowType, FlowDirection, ThemeType, DragonTigerType, DragonTigerReason,
+    
+    # 数据类
+    AnnouncementData, NewsSentimentData, ResearchReportData,
+    CapitalFlowData, ThemeData, DragonTigerData,
+    
+    # 转换函数
+    announcements_to_df, df_to_announcements,
+    news_sentiments_to_df, df_to_news_sentiments,
+    research_reports_to_df, df_to_research_reports,
+    capital_flows_to_df, df_to_capital_flows,
+    themes_to_df, df_to_themes,
+    dragon_tigers_to_df, df_to_dragon_tigers,
+    
+    # 常量
+    ANNOUNCEMENT_COLUMNS, NEWS_SENTIMENT_COLUMNS, RESEARCH_REPORT_COLUMNS,
+    CAPITAL_FLOW_COLUMNS, THEME_COLUMNS, DRAGON_TIGER_COLUMNS,
+    DERIVATIVE_DTYPES,
+)
+
 # ========== 导出清单 ==========
 __all__ = [
     # 共享类型
@@ -71,5 +95,26 @@ __all__ = [
     "FUNDAMENTAL_COLUMNS",
     "fundamentals_to_df",
     "df_to_fundamentals",
+    
+    # 衍生数据 - 枚举类型
+    "AnnouncementType", "NewsSentiment", "ReportType", "ReportRating",
+    "FlowType", "FlowDirection", "ThemeType", "DragonTigerType", "DragonTigerReason",
+    
+    # 衍生数据 - 数据类
+    "AnnouncementData", "NewsSentimentData", "ResearchReportData",
+    "CapitalFlowData", "ThemeData", "DragonTigerData",
+    
+    # 衍生数据 - 转换函数
+    "announcements_to_df", "df_to_announcements",
+    "news_sentiments_to_df", "df_to_news_sentiments",
+    "research_reports_to_df", "df_to_research_reports",
+    "capital_flows_to_df", "df_to_capital_flows",
+    "themes_to_df", "df_to_themes",
+    "dragon_tigers_to_df", "df_to_dragon_tigers",
+    
+    # 衍生数据 - 常量
+    "ANNOUNCEMENT_COLUMNS", "NEWS_SENTIMENT_COLUMNS", "RESEARCH_REPORT_COLUMNS",
+    "CAPITAL_FLOW_COLUMNS", "THEME_COLUMNS", "DRAGON_TIGER_COLUMNS",
+    "DERIVATIVE_DTYPES",
 ]
 

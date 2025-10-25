@@ -26,6 +26,9 @@ from .fundamental_service import FundamentalDataService
 # ========== 分钟线数据服务 ==========
 from .minute_service import MinuteDataService
 
+# ========== 衍生数据服务 ==========
+from .derivative_service import DerivativeDataService
+
 
 # ========== 导出清单 ==========
 __all__ = [
@@ -45,5 +48,8 @@ __all__ = [
     
     # 分钟线服务
     "MinuteDataService",
+    
+    # 衍生数据服务
+    "DerivativeDataService",
 ]
 

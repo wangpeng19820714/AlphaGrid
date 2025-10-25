@@ -50,6 +50,12 @@ from .types import (
     FinancialReportType,
     ReportPeriod,
     
+    # 衍生数据类型
+    AnnouncementData, NewsSentimentData, ResearchReportData,
+    CapitalFlowData, ThemeData, DragonTigerData,
+    AnnouncementType, NewsSentiment, ReportType, ReportRating,
+    FlowType, FlowDirection, ThemeType, DragonTigerType, DragonTigerReason,
+    
     # 工具函数
     bars_to_df,
     df_to_bars,
@@ -57,6 +63,12 @@ from .types import (
     df_to_financials,
     fundamentals_to_df,
     df_to_fundamentals,
+    announcements_to_df, df_to_announcements,
+    news_sentiments_to_df, df_to_news_sentiments,
+    research_reports_to_df, df_to_research_reports,
+    capital_flows_to_df, df_to_capital_flows,
+    themes_to_df, df_to_themes,
+    dragon_tigers_to_df, df_to_dragon_tigers,
 )
 
 # 数据提供者
@@ -66,6 +78,9 @@ from .providers import (
     TuShareProvider,
     YFProvider,
     MinuteProvider,
+    DerivativeProvider,
+    MockDerivativeProvider,
+    AkshareDerivativeProvider,
     get_provider,
     PROVIDERS,
 )
@@ -77,6 +92,7 @@ from .services import (
     FinancialDataService,
     FundamentalDataService,
     MinuteDataService,
+    DerivativeDataService,
     HistoricalDataService,  # 向后兼容
     RESAMPLE_RULES,
 )
@@ -106,6 +122,16 @@ from .stores import (
     MinuteReader,
     load_multi_minutes,
     get_minute_store,
+    
+    # 衍生数据存储
+    DerivativeDataStore,
+    AnnouncementStore,
+    NewsSentimentStore,
+    ResearchReportStore,
+    CapitalFlowStore,
+    ThemeStore,
+    DragonTigerStore,
+    get_derivative_store,
 )
 
 # 数据库
@@ -444,6 +470,121 @@ def quick_minute_bars(symbol: str, start_date: str,
         save_minute_bars(bars)
     return bars
 
+# ========== 衍生数据统一接口函数 ==========
+
+def get_announcements(symbol: str, start_date: str, end_date: str, 
+                     announcement_type: str = None, provider: str = 'derivative', **kwargs):
+    """
+    获取公告数据
+    
+    Args:
+        symbol: 股票代码
+        start_date: 开始日期
+        end_date: 结束日期
+        announcement_type: 公告类型过滤
+        provider: 数据提供者
+        **kwargs: 其他参数
+        
+    Returns:
+        List[AnnouncementData]: 公告数据列表
+    """
+    provider_instance = get_provider(provider, **kwargs)
+    return provider_instance.get_announcements(symbol, start_date, end_date, announcement_type)
+
+def get_news_sentiments(symbol: str, start_date: str, end_date: str,
+                       sentiment: str = None, provider: str = 'derivative', **kwargs):
+    """
+    获取新闻情绪数据
+    
+    Args:
+        symbol: 股票代码
+        start_date: 开始日期
+        end_date: 结束日期
+        sentiment: 情绪类型过滤
+        provider: 数据提供者
+        **kwargs: 其他参数
+        
+    Returns:
+        List[NewsSentimentData]: 新闻情绪数据列表
+    """
+    provider_instance = get_provider(provider, **kwargs)
+    return provider_instance.get_news_sentiments(symbol, start_date, end_date, sentiment)
+
+def get_research_reports(symbol: str, start_date: str, end_date: str,
+                        report_type: str = None, rating: str = None, 
+                        provider: str = 'derivative', **kwargs):
+    """
+    获取研报数据
+    
+    Args:
+        symbol: 股票代码
+        start_date: 开始日期
+        end_date: 结束日期
+        report_type: 研报类型过滤
+        rating: 评级过滤
+        provider: 数据提供者
+        **kwargs: 其他参数
+        
+    Returns:
+        List[ResearchReportData]: 研报数据列表
+    """
+    provider_instance = get_provider(provider, **kwargs)
+    return provider_instance.get_research_reports(symbol, start_date, end_date, report_type, rating)
+
+def get_capital_flows(symbol: str, start_date: str, end_date: str,
+                     flow_type: str = None, provider: str = 'derivative', **kwargs):
+    """
+    获取资金流数据
+    
+    Args:
+        symbol: 股票代码
+        start_date: 开始日期
+        end_date: 结束日期
+        flow_type: 资金流类型过滤
+        provider: 数据提供者
+        **kwargs: 其他参数
+        
+    Returns:
+        List[CapitalFlowData]: 资金流数据列表
+    """
+    provider_instance = get_provider(provider, **kwargs)
+    return provider_instance.get_capital_flows(symbol, start_date, end_date, flow_type)
+
+def get_themes(symbol: str, theme_type: str = None, provider: str = 'derivative', **kwargs):
+    """
+    获取板块/主题数据
+    
+    Args:
+        symbol: 股票代码
+        theme_type: 主题类型过滤
+        provider: 数据提供者
+        **kwargs: 其他参数
+        
+    Returns:
+        List[ThemeData]: 主题数据列表
+    """
+    provider_instance = get_provider(provider, **kwargs)
+    return provider_instance.get_themes(symbol, theme_type)
+
+def get_dragon_tigers(symbol: str, start_date: str, end_date: str,
+                     dragon_tiger_type: str = None, provider: str = 'derivative', **kwargs):
+    """
+    获取龙虎榜数据
+    
+    Args:
+        symbol: 股票代码
+        start_date: 开始日期
+        end_date: 结束日期
+        dragon_tiger_type: 龙虎榜类型过滤
+        provider: 数据提供者
+        **kwargs: 其他参数
+        
+    Returns:
+        List[DragonTigerData]: 龙虎榜数据列表
+    """
+    provider_instance = get_provider(provider, **kwargs)
+    return provider_instance.get_dragon_tigers(symbol, start_date, end_date, dragon_tiger_type)
+
 # ========== 导出清单 ==========
 
 __all__ = [
@@ -453,14 +594,27 @@ __all__ = [
     'bars_to_df', 'df_to_bars', 'financials_to_df', 'df_to_financials',
     'fundamentals_to_df', 'df_to_fundamentals',
     
+    # 衍生数据类型
+    'AnnouncementData', 'NewsSentimentData', 'ResearchReportData',
+    'CapitalFlowData', 'ThemeData', 'DragonTigerData',
+    'AnnouncementType', 'NewsSentiment', 'ReportType', 'ReportRating',
+    'FlowType', 'FlowDirection', 'ThemeType', 'DragonTigerType', 'DragonTigerReason',
+    'announcements_to_df', 'df_to_announcements',
+    'news_sentiments_to_df', 'df_to_news_sentiments',
+    'research_reports_to_df', 'df_to_research_reports',
+    'capital_flows_to_df', 'df_to_capital_flows',
+    'themes_to_df', 'df_to_themes',
+    'dragon_tigers_to_df', 'df_to_dragon_tigers',
+    
     # 数据提供者
     'BaseProvider', 'AkshareProvider', 'TuShareProvider', 'YFProvider', 
-    'MinuteProvider', 'get_provider', 'PROVIDERS',
+    'MinuteProvider', 'DerivativeProvider', 'MockDerivativeProvider', 'AkshareDerivativeProvider',
+    'get_provider', 'PROVIDERS',
     
     # 数据服务
     'BaseDataService', 'BarDataService', 'FinancialDataService', 
-    'FundamentalDataService', 'MinuteDataService', 'HistoricalDataService',
-    'RESAMPLE_RULES',
+    'FundamentalDataService', 'MinuteDataService', 'DerivativeDataService',
+    'HistoricalDataService', 'RESAMPLE_RULES',
     
     # 数据存储
     'StoreConfig', 'BaseStore', 'ManifestIndex',
@@ -468,6 +622,9 @@ __all__ = [
     'FinancialStore', 'save_financials', 'load_financials',
     'FundamentalStore',
     'MinuteStore', 'MinuteReader', 'load_multi_minutes', 'get_minute_store',
+    'DerivativeDataStore', 'AnnouncementStore', 'NewsSentimentStore',
+    'ResearchReportStore', 'CapitalFlowStore', 'ThemeStore', 'DragonTigerStore',
+    'get_derivative_store',
     
     # 数据库
     'DataHub', 'get_data_hub',
@@ -476,6 +633,10 @@ __all__ = [
     'get_bars', 'get_minute_bars', 'get_financials', 'get_fundamentals',
     'save_bars', 'save_minute_bars', 'save_financials', 'save_fundamentals',
     'query_bars', 'query_minute_bars', 'query_financials', 'query_fundamentals',
+    
+    # 衍生数据接口
+    'get_announcements', 'get_news_sentiments', 'get_research_reports',
+    'get_capital_flows', 'get_themes', 'get_dragon_tigers',
     
     # 便捷函数
     'quick_bars', 'quick_minute_bars',

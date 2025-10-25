@@ -57,6 +57,18 @@ from .minute_store import (
     load_multi_minute,
 )
 
+# ========== 衍生数据存储 ==========
+from .derivative_store import (
+    DerivativeDataStore,
+    AnnouncementStore,
+    NewsSentimentStore,
+    ResearchReportStore,
+    CapitalFlowStore,
+    ThemeStore,
+    DragonTigerStore,
+    get_derivative_store,
+)
+
 # ========== 导出清单 ==========
 __all__ = [
     # 配置和基础类
@@ -104,5 +116,15 @@ __all__ = [
     "MinuteDataStore",
     "MinuteDataReader",
     "load_multi_minute",
+    
+    # 衍生数据存储
+    "DerivativeDataStore",
+    "AnnouncementStore",
+    "NewsSentimentStore",
+    "ResearchReportStore",
+    "CapitalFlowStore",
+    "ThemeStore",
+    "DragonTigerStore",
+    "get_derivative_store",
 ]
 
