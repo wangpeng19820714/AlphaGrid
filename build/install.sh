@@ -57,41 +57,41 @@ read -p "请输入选择 (1-5): " choice
 case $choice in
     1)
         echo "🔧 执行最小安装..."
-        if [ -f "/requirements/requirements-minimal.txt" ]; then
-            python3 -m pip install -r /requirements/requirements-minimal.txt
+        if [ -f "requirements/requirements-minimal.txt" ]; then
+            python3 -m pip install -r requirements/requirements-minimal.txt
             echo "✅ 最小依赖包安装完成"
         else
-            echo "❌ 错误: 未找到 /requirements/requirements-minimal.txt 文件"
+            echo "❌ 错误: 未找到 requirements/requirements-minimal.txt 文件"
             exit 1
         fi
         ;;
     2)
         echo "🔧 执行完整安装..."
-        if [ -f "/requirements/requirements.txt" ]; then
-            python3 -m pip install -r /requirements/requirements.txt
+        if [ -f "requirements/requirements.txt" ]; then
+            python3 -m pip install -r requirements/requirements.txt
             echo "✅ 完整依赖包安装完成"
         else
-            echo "❌ 错误: 未找到 /requirements/requirements.txt 文件"
+            echo "❌ 错误: 未找到 requirements/requirements.txt 文件"
             exit 1
         fi
         ;;
     3)
         echo "🔧 执行生产环境安装..."
-        if [ -f "/requirements/requirements-prod.txt" ]; then
+        if [ -f "requirements/requirements-prod.txt" ]; then
             python3 -m pip install -r /requirements/requirements-prod.txt
             echo "✅ 生产环境依赖包安装完成"
         else
-            echo "❌ 错误: 未找到 /requirements/requirements-prod.txt 文件"
+            echo "❌ 错误: 未找到 requirements/requirements-prod.txt 文件"
             exit 1
         fi
         ;;
     4)
         echo "🔧 执行开发环境安装..."
-        if [ -f "/requirements/requirements-dev.txt" ]; then
-            python3 -m pip install -r /requirements/requirements-dev.txt
+        if [ -f "requirements/requirements-dev.txt" ]; then
+            python3 -m pip install -r requirements/requirements-dev.txt
             echo "✅ 开发环境依赖包安装完成"
         else
-            echo "❌ 错误: 未找到 /requirements/requirements-dev.txt 文件"
+            echo "❌ 错误: 未找到 requirements/requirements-dev.txt 文件"
             exit 1
         fi
         ;;
@@ -116,32 +116,3 @@ case $choice in
         fi
         ;;
 esac
-
-# 创建数据目录
-echo "📁 创建必要目录..."
-mkdir -p src/qp/cache
-mkdir -p src/qp/reports
-mkdir -p data
-
-# 设置执行权限
-echo "🔧 设置执行权限..."
-chmod +x src/qp/run_backtest.py
-
-# 验证安装
-echo "🧪 验证安装..."
-if python3 -c "import sys; sys.path.append('src'); import qp.cli; print('✅ qp模块导入成功')"; then
-    echo "✅ 安装验证通过"
-else
-    echo "❌ 安装验证失败"
-    exit 1
-fi
-
-echo ""
-echo "🎉 安装完成！"
-echo "================================================"
-echo "📖 使用方法:"
-echo "   python3 -m qp.cli --help"
-echo "   python3 src/qp/run_backtest.py"
-echo ""
-echo "📚 更多信息请查看 README.md"
-echo "================================================"

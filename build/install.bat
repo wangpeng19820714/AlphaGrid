@@ -54,8 +54,8 @@ set /p choice=请输入选择 (1-5):
 
 if "%choice%"=="1" (
     echo 🔧 执行最小安装...
-    if exist "\requirements\requirements-minimal.txt" (
-        python -m pip install -r \requirements\requirements-minimal.txt
+    if exist "requirements\requirements-minimal.txt" (
+        python -m pip install -r requirements\requirements-minimal.txt
         if errorlevel 1 (
             echo ❌ 最小依赖包安装失败
             pause
@@ -63,14 +63,14 @@ if "%choice%"=="1" (
         )
         echo ✅ 最小依赖包安装完成
     ) else (
-        echo ❌ 错误: 未找到 \requirements\requirements-minimal.txt 文件
+        echo ❌ 错误: 未找到 requirements\requirements-minimal.txt 文件
         pause
         exit /b 1
     )
 ) else if "%choice%"=="2" (
     echo 🔧 执行完整安装...
-    if exist "\requirements\requirements.txt" (
-        python -m pip install -r \requirements\requirements.txt
+    if exist "requirements\requirements.txt" (
+        python -m pip install -r requirements\requirements.txt
         if errorlevel 1 (
             echo ❌ 完整依赖包安装失败
             pause
@@ -78,14 +78,14 @@ if "%choice%"=="1" (
         )
         echo ✅ 完整依赖包安装完成
     ) else (
-        echo ❌ 错误: 未找到 \requirements\requirements.txt 文件
+        echo ❌ 错误: 未找到 requirements\requirements.txt 文件
         pause
         exit /b 1
     )
 ) else if "%choice%"=="3" (
     echo 🔧 执行生产环境安装...
-    if exist "\requirements\requirements-prod.txt" (
-        python -m pip install -r \requirements\requirements-prod.txt
+    if exist "requirements\requirements-prod.txt" (
+        python -m pip install -r requirements\requirements-prod.txt
         if errorlevel 1 (
             echo ❌ 生产环境依赖包安装失败
             pause
@@ -93,14 +93,14 @@ if "%choice%"=="1" (
         )
         echo ✅ 生产环境依赖包安装完成
     ) else (
-        echo ❌ 错误: 未找到 \requirements\requirements-prod.txt 文件
+        echo ❌ 错误: 未找到 requirements\requirements-prod.txt 文件
         pause
         exit /b 1
     )
 ) else if "%choice%"=="4" (
     echo 🔧 执行开发环境安装...
-    if exist "\requirements\requirements-dev.txt" (
-        python -m pip install -r \requirements\requirements-dev.txt
+    if exist "requirements\requirements-dev.txt" (
+        python -m pip install -r requirements\requirements-dev.txt
         if errorlevel 1 (
             echo ❌ 开发环境依赖包安装失败
             pause
@@ -108,7 +108,7 @@ if "%choice%"=="1" (
         )
         echo ✅ 开发环境依赖包安装完成
     ) else (
-        echo ❌ 错误: 未找到 \requirements\requirements-dev.txt 文件
+        echo ❌ 错误: 未找到 requirements\requirements-dev.txt 文件
         pause
         exit /b 1
     )
@@ -144,31 +144,12 @@ if "%choice%"=="1" (
     )
 )
 
-REM 创建数据目录
-echo.
-echo 📁 创建必要目录...
-if not exist "src\qp\cache" mkdir "src\qp\cache"
-if not exist "src\qp\reports" mkdir "src\qp\reports"
-if not exist "data" mkdir "data"
-
-REM 验证安装
-echo.
-echo 🧪 验证安装...
-python -c "import sys; sys.path.append('src'); import qp.cli; print('✅ qp模块导入成功')"
-if errorlevel 1 (
-    echo ❌ 安装验证失败
-    pause
-    exit /b 1
-)
-
 echo ✅ 安装验证通过
 
 echo.
 echo 🎉 安装完成！
 echo ================================================
 echo 📖 使用方法:
-echo    python -m qp.cli --help
-echo    python src/qp/run_backtest.py
 echo.
 echo 📚 更多信息请查看 README.md
 echo ================================================

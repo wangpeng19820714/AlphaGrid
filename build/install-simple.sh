@@ -17,9 +17,5 @@ echo "📦 安装依赖包..."
 python3 -m pip install --upgrade pip
 python3 -m pip install -e .
 
-# 创建目录
-mkdir -p src/qp/cache src/qp/reports data
 
 echo "✅ 安装完成！"
-echo "运行: python3 -m qp.cli --help"
-echo "运行: python3 src/qp/run_backtest.py"

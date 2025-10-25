@@ -23,13 +23,6 @@ echo 📦 安装依赖包...
 python -m pip install --upgrade pip
 python -m pip install -e .
 
-REM 创建目录
-mkdir src\qp\cache 2>nul
-mkdir src\qp\reports 2>nul
-mkdir data 2>nul
-
 echo.
 echo ✅ 安装完成！
-echo 运行: python -m qp.cli --help
-echo 运行: python src\qp\run_backtest.py
 pause
