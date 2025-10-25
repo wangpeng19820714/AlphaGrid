@@ -48,13 +48,14 @@ echo 1) 最小安装 (仅核心功能)
 echo 2) 完整安装 (包含所有功能)
 echo 3) 生产环境 (推荐用于生产)
 echo 4) 开发环境 (包含开发工具)
+echo 5) 开发模式安装 (推荐用于开发)
 echo.
-set /p choice=请输入选择 (1-4): 
+set /p choice=请输入选择 (1-5): 
 
 if "%choice%"=="1" (
     echo 🔧 执行最小安装...
-    if exist "requirements\requirements-minimal.txt" (
-        python -m pip install -r requirements\requirements-minimal.txt
+    if exist "\requirements\requirements-minimal.txt" (
+        python -m pip install -r \requirements\requirements-minimal.txt
         if errorlevel 1 (
             echo ❌ 最小依赖包安装失败
             pause
@@ -62,14 +63,14 @@ if "%choice%"=="1" (
         )
         echo ✅ 最小依赖包安装完成
     ) else (
-        echo ❌ 错误: 未找到 requirements\requirements-minimal.txt 文件
+        echo ❌ 错误: 未找到 \requirements\requirements-minimal.txt 文件
         pause
         exit /b 1
     )
 ) else if "%choice%"=="2" (
     echo 🔧 执行完整安装...
-    if exist "requirements\requirements.txt" (
-        python -m pip install -r requirements\requirements.txt
+    if exist "\requirements\requirements.txt" (
+        python -m pip install -r \requirements\requirements.txt
         if errorlevel 1 (
             echo ❌ 完整依赖包安装失败
             pause
@@ -77,14 +78,14 @@ if "%choice%"=="1" (
         )
         echo ✅ 完整依赖包安装完成
     ) else (
-        echo ❌ 错误: 未找到 requirements\requirements.txt 文件
+        echo ❌ 错误: 未找到 \requirements\requirements.txt 文件
         pause
         exit /b 1
     )
 ) else if "%choice%"=="3" (
     echo 🔧 执行生产环境安装...
-    if exist "requirements\requirements-prod.txt" (
-        python -m pip install -r requirements\requirements-prod.txt
+    if exist "\requirements\requirements-prod.txt" (
+        python -m pip install -r \requirements\requirements-prod.txt
         if errorlevel 1 (
             echo ❌ 生产环境依赖包安装失败
             pause
@@ -92,14 +93,14 @@ if "%choice%"=="1" (
         )
         echo ✅ 生产环境依赖包安装完成
     ) else (
-        echo ❌ 错误: 未找到 requirements\requirements-prod.txt 文件
+        echo ❌ 错误: 未找到 \requirements\requirements-prod.txt 文件
         pause
         exit /b 1
     )
 ) else if "%choice%"=="4" (
     echo 🔧 执行开发环境安装...
-    if exist "requirements\requirements-dev.txt" (
-        python -m pip install -r requirements\requirements-dev.txt
+    if exist "\requirements\requirements-dev.txt" (
+        python -m pip install -r \requirements\requirements-dev.txt
         if errorlevel 1 (
             echo ❌ 开发环境依赖包安装失败
             pause
@@ -107,22 +108,37 @@ if "%choice%"=="1" (
         )
         echo ✅ 开发环境依赖包安装完成
     ) else (
-        echo ❌ 错误: 未找到 requirements\requirements-dev.txt 文件
+        echo ❌ 错误: 未找到 \requirements\requirements-dev.txt 文件
+        pause
+        exit /b 1
+    )
+) else if "%choice%"=="5" (
+    echo 🔧 执行开发模式安装...
+    if exist "setup.py" (
+        python -m pip install -e .
+        if errorlevel 1 (
+            echo ❌ 开发模式安装失败
+            pause
+            exit /b 1
+        )
+        echo ✅ 开发模式安装完成
+    ) else (
+        echo ❌ 错误: 未找到 setup.py 文件
         pause
         exit /b 1
     )
 ) else (
-    echo ⚠️  无效选择，使用默认完整安装...
-    if exist "requirements\requirements.txt" (
-        python -m pip install -r requirements\requirements.txt
+    echo ⚠️  无效选择，使用默认开发模式安装...
+    if exist "setup.py" (
+        python -m pip install -e .
         if errorlevel 1 (
-            echo ❌ 依赖包安装失败
+            echo ❌ 开发模式安装失败
             pause
             exit /b 1
         )
-        echo ✅ 依赖包安装完成
+        echo ✅ 开发模式安装完成
     ) else (
-        echo ❌ 错误: 未找到 requirements\requirements.txt 文件
+        echo ❌ 错误: 未找到 setup.py 文件
         pause
         exit /b 1
     )
@@ -131,15 +147,14 @@ if "%choice%"=="1" (
 REM 创建数据目录
 echo.
 echo 📁 创建必要目录...
-if not exist "quant\data" mkdir "quant\data"
-if not exist "quant\cache" mkdir "quant\cache"
-if not exist "quant\reports" mkdir "quant\reports"
+if not exist "src\qp\cache" mkdir "src\qp\cache"
+if not exist "src\qp\reports" mkdir "src\qp\reports"
+if not exist "data" mkdir "data"
 
 REM 验证安装
 echo.
 echo 🧪 验证安装...
-cd quant
-python -c "import pandas, numpy, pyarrow; print('✅ 核心依赖包导入成功')"
+python -c "import sys; sys.path.append('src'); import qp.cli; print('✅ qp模块导入成功')"
 if errorlevel 1 (
     echo ❌ 安装验证失败
     pause
@@ -152,8 +167,8 @@ echo.
 echo 🎉 安装完成！
 echo ================================================
 echo 📖 使用方法:
-echo    cd quant
-echo    python run_backtest.py
+echo    python -m qp.cli --help
+echo    python src/qp/run_backtest.py
 echo.
 echo 📚 更多信息请查看 README.md
 echo ================================================

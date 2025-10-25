@@ -32,25 +32,23 @@ else
     echo "[警告] 未找到虚拟环境，使用系统 Python"
 fi
 
-# 进入 quant 目录
-if [ ! -d "quant" ]; then
-    echo "[错误] 未找到 quant 目录"
+# 检查 src/qp 目录
+if [ ! -d "src/qp" ]; then
+    echo "[错误] 未找到 src/qp 目录"
     exit 1
 fi
 
-cd quant
-
 # 检查数据文件是否存在
-if [ ! -f "data/stock.csv" ]; then
-    echo "[错误] 未找到数据文件: data/stock.csv"
-    echo "请确保数据文件存在后再运行"
-    exit 1
+if [ ! -f "src/qp/data/stock.csv" ]; then
+    echo "[警告] 未找到数据文件: src/qp/data/stock.csv"
+    echo "将使用默认配置运行"
+    echo ""
 fi
 
 # 运行回测脚本
 echo "[运行] 启动量化回测..."
 echo ""
-python3 run_backtest.py
+python3 src/qp/run_backtest.py
 
 # 检查运行结果
 if [ $? -eq 0 ]; then

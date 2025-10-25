@@ -50,57 +50,68 @@ echo "1) 最小安装 (仅核心功能)"
 echo "2) 完整安装 (包含所有功能)"
 echo "3) 生产环境 (推荐用于生产)"
 echo "4) 开发环境 (包含开发工具)"
+echo "5) 开发模式安装 (推荐用于开发)"
 echo ""
-read -p "请输入选择 (1-4): " choice
+read -p "请输入选择 (1-5): " choice
 
 case $choice in
     1)
         echo "🔧 执行最小安装..."
-        if [ -f "requirements/requirements-minimal.txt" ]; then
-            python3 -m pip install -r requirements/requirements-minimal.txt
+        if [ -f "/requirements/requirements-minimal.txt" ]; then
+            python3 -m pip install -r /requirements/requirements-minimal.txt
             echo "✅ 最小依赖包安装完成"
         else
-            echo "❌ 错误: 未找到 requirements/requirements-minimal.txt 文件"
+            echo "❌ 错误: 未找到 /requirements/requirements-minimal.txt 文件"
             exit 1
         fi
         ;;
     2)
         echo "🔧 执行完整安装..."
-        if [ -f "requirements/requirements.txt" ]; then
-            python3 -m pip install -r requirements/requirements.txt
+        if [ -f "/requirements/requirements.txt" ]; then
+            python3 -m pip install -r /requirements/requirements.txt
             echo "✅ 完整依赖包安装完成"
         else
-            echo "❌ 错误: 未找到 requirements/requirements.txt 文件"
+            echo "❌ 错误: 未找到 /requirements/requirements.txt 文件"
             exit 1
         fi
         ;;
     3)
         echo "🔧 执行生产环境安装..."
-        if [ -f "requirements/requirements-prod.txt" ]; then
-            python3 -m pip install -r requirements/requirements-prod.txt
+        if [ -f "/requirements/requirements-prod.txt" ]; then
+            python3 -m pip install -r /requirements/requirements-prod.txt
             echo "✅ 生产环境依赖包安装完成"
         else
-            echo "❌ 错误: 未找到 requirements/requirements-prod.txt 文件"
+            echo "❌ 错误: 未找到 /requirements/requirements-prod.txt 文件"
             exit 1
         fi
         ;;
     4)
         echo "🔧 执行开发环境安装..."
-        if [ -f "requirements/requirements-dev.txt" ]; then
-            python3 -m pip install -r requirements/requirements-dev.txt
+        if [ -f "/requirements/requirements-dev.txt" ]; then
+            python3 -m pip install -r /requirements/requirements-dev.txt
             echo "✅ 开发环境依赖包安装完成"
         else
-            echo "❌ 错误: 未找到 requirements/requirements-dev.txt 文件"
+            echo "❌ 错误: 未找到 /requirements/requirements-dev.txt 文件"
+            exit 1
+        fi
+        ;;
+    5)
+        echo "🔧 执行开发模式安装..."
+        if [ -f "setup.py" ]; then
+            python3 -m pip install -e .
+            echo "✅ 开发模式安装完成"
+        else
+            echo "❌ 错误: 未找到 setup.py 文件"
             exit 1
         fi
         ;;
     *)
-        echo "⚠️  无效选择，使用默认完整安装..."
-        if [ -f "requirements/requirements.txt" ]; then
-            python3 -m pip install -r requirements/requirements.txt
-            echo "✅ 依赖包安装完成"
+        echo "⚠️  无效选择，使用默认开发模式安装..."
+        if [ -f "setup.py" ]; then
+            python3 -m pip install -e .
+            echo "✅ 开发模式安装完成"
         else
-            echo "❌ 错误: 未找到 requirements/requirements.txt 文件"
+            echo "❌ 错误: 未找到 setup.py 文件"
             exit 1
         fi
         ;;
@@ -108,18 +119,17 @@ esac
 
 # 创建数据目录
 echo "📁 创建必要目录..."
-mkdir -p quant/data
-mkdir -p quant/cache
-mkdir -p quant/reports
+mkdir -p src/qp/cache
+mkdir -p src/qp/reports
+mkdir -p data
 
 # 设置执行权限
 echo "🔧 设置执行权限..."
-chmod +x quant/run_backtest.py
+chmod +x src/qp/run_backtest.py
 
 # 验证安装
 echo "🧪 验证安装..."
-cd quant
-if python3 -c "import pandas, numpy, pyarrow; print('✅ 核心依赖包导入成功')"; then
+if python3 -c "import sys; sys.path.append('src'); import qp.cli; print('✅ qp模块导入成功')"; then
     echo "✅ 安装验证通过"
 else
     echo "❌ 安装验证失败"
@@ -130,8 +140,8 @@ echo ""
 echo "🎉 安装完成！"
 echo "================================================"
 echo "📖 使用方法:"
-echo "   cd quant"
-echo "   python3 run_backtest.py"
+echo "   python3 -m qp.cli --help"
+echo "   python3 src/qp/run_backtest.py"
 echo ""
 echo "📚 更多信息请查看 README.md"
 echo "================================================"
