@@ -1,4 +1,4 @@
-# quant/config_manager.py
+# qp/config_manager.py
 # -*- coding: utf-8 -*-
 """
 统一配置管理模块

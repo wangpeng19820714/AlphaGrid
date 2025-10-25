@@ -25,7 +25,7 @@ pip install -r requirements/requirements-dev.txt
 ### 运行回测
 
 ```bash
-cd quant
+cd qp
 python3 run_backtest.py
 ```
 
