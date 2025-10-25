@@ -11,8 +11,8 @@ import sys
 from datetime import datetime, timedelta
 import pandas as pd
 
-from datahub.services import MinuteDataService, BarDataService
-from datahub.types import Exchange, Interval
+from qp.data.services import MinuteDataService, BarDataService
+from qp.data.types import Exchange, Interval
 
 
 def minute_data_command(args):
@@ -184,7 +184,7 @@ def bar_data_command(args):
     return 0
 
 
-def main():
+def main(args=None):
     """主函数"""
     parser = argparse.ArgumentParser(description="AlphaGrid CLI 工具")
     subparsers = parser.add_subparsers(dest="command", help="可用命令")
@@ -212,7 +212,7 @@ def main():
                           help="交易所")
     bar_parser.add_argument("--days", "-d", type=int, default=30, help="导入天数")
     
-    args = parser.parse_args()
+    args = parser.parse_args(args)
     
     if not args.command:
         parser.print_help()

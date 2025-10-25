@@ -1,0 +1,12 @@
+# 开发环境依赖 (包含所有生产依赖 + 开发工具)
+-r requirements-prod.txt
+
+# 开发工具
+black>=23.0.0
+flake8>=6.0.0
+ipykernel>=6.0.0
+jupyter>=1.0.0
+mypy>=1.0.0
+pytest-cov>=4.0.0
+pytest>=7.0.0
+sphinx>=6.0.0
