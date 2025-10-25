@@ -291,7 +291,7 @@ def write_requirements(file_path: Path, packages: Set[str], header: str = ""):
 def main():
     parser = argparse.ArgumentParser(description='Requirements 智能更新工具')
     parser.add_argument('--no-freeze', action='store_true', help='不生成freeze版本')
-    parser.add_argument('--dir', default='install/requirements', help='输出目录')
+    parser.add_argument('--dir', default='requirements', help='输出目录')
     parser.add_argument('--yes', '-y', action='store_true', help='自动确认所有提示')
     args = parser.parse_args()
     
