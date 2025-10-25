@@ -1,0 +1,32 @@
+# config/data_layers.yaml
+root: ./data/history_root        # Parquet 根目录（相对路径）
+provider: akshare                # akshare | tushare | yfinance
+adjust: qfq                      # none | qfq | hfq
+interval: 1d                     # 目前示例实现 1d（日线）
+
+# 拉取时间窗（默认：从 2024-01-01 到今天）
+start: 2024-01-01
+end: today
+
+# 并发设置
+concurrency: 2                   # 并发线程数（按标的）- 降低并发避免API限制
+retry: 2                         # 失败重试次数
+
+# TuShare 专用（可用环境变量 TUSHARE_TOKEN 覆盖）
+tushare_token: null
+
+layers:
+  core:                          # level1_core：核心池（日更）
+    path: level1_core
+    symbols: [000001, 600000, 300750]  # AKShare不需要后缀
+
+  sector:                        # level2_sector：行业代表池（日更）
+    path: level2_sector
+    symbols_file: quant/configs/sector_symbols.txt   # 修正路径
+    symbols: []                               # 也可直接写在列表中
+
+  full:                          # level3_full：全市场（建议周更）
+    path: level3_full
+    auto_discover: false         # 关闭自动发现
+    symbols: []                  # 若不 auto_discover，可直接放这里或用文件
+    update_day_of_week: 6        # 0=周一 ... 6=周日；仅在该日更新（或加 --force）
