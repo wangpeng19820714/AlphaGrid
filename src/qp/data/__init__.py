@@ -123,13 +123,11 @@ from .stores import (
     BarReader,
     load_multi_bars,
     
-    # 财务存储
-    FinancialStore,
-    save_financials,
-    load_financials,
+    # 财务存储 - 已迁移到数据分层架构
+    # FinancialStore, save_financials, load_financials,
     
-    # 基本面存储
-    FundamentalStore,
+    # 基本面存储 - 已迁移到数据分层架构
+    # FundamentalStore,
     
     # 分钟线存储
     MinuteStore,
@@ -290,45 +288,25 @@ def save_minute_bars(bars, store_config: StoreConfig = None):
 
 def save_financials(financials, store_config: StoreConfig = None):
     """
-    保存财务数据
+    保存财务数据（已迁移到数据分层架构）
     
-    Args:
-        financials: 财务数据列表
-        store_config: 存储配置
-        
-    Returns:
-        int: 保存的记录数
-        
-    Example:
-        >>> financials = get_financials('000001.SZ', '2023-01-01', '2023-12-31')
-        >>> save_financials(financials)
+    注意：此函数已废弃，请使用新的数据分层架构
     """
-    if store_config is None:
-        store_config = StoreConfig()
-    
-    store = FinancialStore(store_config)
-    return store.save_financials(financials)
+    raise DeprecationWarning(
+        "save_financials 已废弃，请使用 DataLayersPipeline.process_financial_data() "
+        "或 ODSStore.save_financial_by_type()"
+    )
 
 def save_fundamentals(fundamentals, store_config: StoreConfig = None):
     """
-    保存基本面数据
+    保存基本面数据（已迁移到数据分层架构）
     
-    Args:
-        fundamentals: 基本面数据列表
-        store_config: 存储配置
-        
-    Returns:
-        int: 保存的记录数
-        
-    Example:
-        >>> fundamentals = get_fundamentals('000001.SZ', '2023-01-01', '2023-12-31')
-        >>> save_fundamentals(fundamentals)
+    注意：此函数已废弃，请使用新的数据分层架构
     """
-    if store_config is None:
-        store_config = StoreConfig()
-    
-    store = FundamentalStore(store_config)
-    return store.save_fundamentals(fundamentals)
+    raise DeprecationWarning(
+        "save_fundamentals 已废弃，请使用 DataLayersPipeline.process_fundamental_data() "
+        "或 ODSStore.save_fundamental()"
+    )
 
 def query_bars(symbol: str, start_date: str, end_date: str, 
                store_config: StoreConfig = None):
@@ -379,48 +357,26 @@ def query_minute_bars(symbol: str, start_date: str, end_date: str,
 def query_financials(symbol: str, start_date: str, end_date: str, 
                     store_config: StoreConfig = None):
     """
-    查询财务数据
+    查询财务数据（已迁移到数据分层架构）
     
-    Args:
-        symbol: 股票代码
-        start_date: 开始日期
-        end_date: 结束日期
-        store_config: 存储配置
-        
-    Returns:
-        List[FinancialData]: 财务数据列表
-        
-    Example:
-        >>> financials = query_financials('000001.SZ', '2023-01-01', '2023-12-31')
+    注意：此函数已废弃，请使用新的数据分层架构
     """
-    if store_config is None:
-        store_config = StoreConfig()
-    
-    store = FinancialStore(store_config)
-    return store.query_financials(symbol, start_date, end_date)
+    raise DeprecationWarning(
+        "query_financials 已废弃，请使用 ODSStore.load_financial_by_type() "
+        "或 DWDStore.load_financial()"
+    )
 
 def query_fundamentals(symbol: str, start_date: str, end_date: str, 
                       store_config: StoreConfig = None):
     """
-    查询基本面数据
+    查询基本面数据（已迁移到数据分层架构）
     
-    Args:
-        symbol: 股票代码
-        start_date: 开始日期
-        end_date: 结束日期
-        store_config: 存储配置
-        
-    Returns:
-        List[FundamentalData]: 基本面数据列表
-        
-    Example:
-        >>> fundamentals = query_fundamentals('000001.SZ', '2023-01-01', '2023-12-31')
+    注意：此函数已废弃，请使用新的数据分层架构
     """
-    if store_config is None:
-        store_config = StoreConfig()
-    
-    store = FundamentalStore(store_config)
-    return store.query_fundamentals(symbol, start_date, end_date)
+    raise DeprecationWarning(
+        "query_fundamentals 已废弃，请使用 ODSStore.load_fundamental() "
+        "或 DWDStore.load_fundamental()"
+    )
 
 def get_data_hub(config_path: str = None):
     """

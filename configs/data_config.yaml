@@ -1,4 +1,4 @@
-# config/data_layers.yaml
+# config/data_config.yaml
 root: ./data/history_root        # Parquet 根目录（相对路径）
 provider: akshare                # akshare | tushare | yfinance
 adjust: qfq                      # none | qfq | hfq
@@ -14,6 +14,29 @@ retry: 2                         # 失败重试次数
 
 # TuShare 专用（可用环境变量 TUSHARE_TOKEN 覆盖）
 tushare_token: null
+
+# ========== 数据分层架构配置 ==========
+data_layers:
+  # ODS层 - 原始数据存储
+  ods:
+    root: ./data/ods              # ODS层根目录
+    retention_days: 3650          # 数据保留天数（10年）
+    compression: snappy           # 压缩格式
+    partition_by: [market, date, symbol]  # 分区策略
+    
+  # DWD层 - 明细数据存储  
+  dwd:
+    root: ./data/dwd              # DWD层根目录
+    retention_days: 1825          # 数据保留天数（5年）
+    compression: snappy           # 压缩格式
+    partition_by: [market, symbol] # 分区策略
+    
+  # DWS层 - 汇总数据存储
+  dws:
+    root: ./data/dws              # DWS层根目录
+    retention_days: 1095          # 数据保留天数（3年）
+    compression: snappy           # 压缩格式
+    partition_by: [market, symbol] # 分区策略
 
 layers:
   core:                          # level1_core：核心池（日更）

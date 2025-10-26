@@ -94,7 +94,8 @@ class DataHub:
     
     def _init_stores(self):
         """初始化数据存储"""
-        from .stores import StoreConfig, BarStore, MinuteStore, FinancialStore, FundamentalStore
+        from .stores import StoreConfig, BarStore, MinuteStore
+        # 注意：FinancialStore 和 FundamentalStore 已迁移到数据分层架构
         
         store_config = StoreConfig(
             root=self.config.get('root', 'data/history_root')
@@ -102,8 +103,8 @@ class DataHub:
         
         self.bar_store = BarStore(store_config)
         self.minute_store = MinuteStore(store_config)
-        self.financial_store = FinancialStore(store_config)
-        self.fundamental_store = FundamentalStore(store_config)
+        # self.financial_store = FinancialStore(store_config)  # 已迁移
+        # self.fundamental_store = FundamentalStore(store_config)  # 已迁移
     
     def get_bars(self, symbol: str, start_date: str, end_date: str, 
                  interval: str = 'daily') -> List[BarData]:
