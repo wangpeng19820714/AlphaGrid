@@ -1,0 +1,37 @@
+{
+  "report_type": "compliance",
+  "generated_at": "2025-10-26T10:34:22.326977",
+  "compliance_summary": {
+    "total_checks": 3,
+    "passed_checks": 2,
+    "failed_checks": 0,
+    "warning_checks": 1
+  },
+  "policies": [
+    {
+      "id": "bars_policy",
+      "name": "K线数据策略",
+      "description": "K线数据的访问控制和保留策略",
+      "data_classification": "internal",
+      "retention_policy": "years_3",
+      "enabled": true
+    },
+    {
+      "id": "financial_policy",
+      "name": "财务数据策略",
+      "description": "财务数据的访问控制和保留策略",
+      "data_classification": "confidential",
+      "retention_policy": "years_7",
+      "enabled": true
+    }
+  ],
+  "access_rules": [
+    {
+      "user_id": "developer_001",
+      "asset_id": "bars_000001.SZ_SZSE_3",
+      "access_level": "write",
+      "granted_at": "2025-10-26T10:34:22.326354",
+      "expires_at": "2025-11-02T10:34:22.326350"
+    }
+  ]
+}

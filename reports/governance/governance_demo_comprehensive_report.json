@@ -1,0 +1,63 @@
+{
+  "report_type": "comprehensive",
+  "generated_at": "2025-10-26T10:34:22.326892",
+  "governance_summary": {
+    "total_assets": 1,
+    "total_policies": 2,
+    "total_lineages": 1,
+    "active_alerts": 0
+  },
+  "asset_statistics": {
+    "total_assets": 1,
+    "by_type": {
+      "bars": 1
+    },
+    "by_owner": {
+      "demo_user": 1
+    },
+    "by_tag": {
+      "banking": 1,
+      "daily": 1,
+      "demo": 1,
+      "shenzhen": 1,
+      "stock": 1
+    },
+    "recent_activity": [
+      {
+        "asset_id": "bars_000001.SZ_SZSE_3",
+        "name": "平安银行K线数据",
+        "updated_at": "2025-10-26T10:34:22.320937"
+      }
+    ]
+  },
+  "health_statuses": {
+    "data_service": {
+      "component": "data_service",
+      "status": "unhealthy",
+      "message": "无法获取数据质量指标",
+      "last_check": "2025-10-26T10:34:22.317352",
+      "metrics": {}
+    },
+    "storage_service": {
+      "component": "storage_service",
+      "status": "unhealthy",
+      "message": "无法获取存储使用率指标",
+      "last_check": "2025-10-26T10:34:22.317358",
+      "metrics": {}
+    },
+    "provider_service": {
+      "component": "provider_service",
+      "status": "unhealthy",
+      "message": "无法获取API错误率指标",
+      "last_check": "2025-10-26T10:34:22.317361",
+      "metrics": {}
+    }
+  },
+  "recent_alerts": [],
+  "compliance_summary": {
+    "total_checks": 3,
+    "passed_checks": 2,
+    "failed_checks": 0,
+    "warning_checks": 1
+  }
+}

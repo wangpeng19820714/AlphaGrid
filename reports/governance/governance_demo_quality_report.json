@@ -1,0 +1,45 @@
+{
+  "report_type": "quality",
+  "generated_at": "2025-10-26T10:34:22.326944",
+  "quality_summary": {
+    "total_checks": 0,
+    "passed_checks": 0,
+    "failed_checks": 0,
+    "warning_checks": 0
+  },
+  "quality_metrics": {
+    "data_quality_score": {
+      "count": 3,
+      "min": 0.75,
+      "max": 1.0,
+      "mean": 0.9166666666666666,
+      "latest": 1.0
+    },
+    "data_age_hours": {
+      "count": 1,
+      "min": 2.5,
+      "max": 2.5,
+      "mean": 2.5,
+      "latest": 2.5
+    },
+    "storage_usage_percent": {
+      "count": 1,
+      "min": 75.0,
+      "max": 75.0,
+      "mean": 75.0,
+      "latest": 75.0
+    },
+    "api_error_rate": {
+      "count": 1,
+      "min": 0.02,
+      "max": 0.02,
+      "mean": 0.02,
+      "latest": 0.02
+    }
+  },
+  "recommendations": [
+    "定期检查数据质量",
+    "建立数据质量监控机制",
+    "制定数据质量改进计划"
+  ]
+}

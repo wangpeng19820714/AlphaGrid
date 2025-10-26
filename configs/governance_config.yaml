@@ -1,0 +1,120 @@
+# configs/governance_config.yaml
+# AlphaGrid 数据治理模块配置文件
+
+# 监控配置
+monitoring:
+  interval: 60  # 监控间隔（秒）
+  alert_thresholds:
+    data_quality_score: 0.8
+    data_age_hours: 24
+    storage_usage_percent: 90
+    api_error_rate: 0.1
+
+# 质量检查配置
+quality:
+  enabled: true
+  rules:
+    - completeness
+    - accuracy
+    - consistency
+    - validity
+  custom_rules: []  # 自定义规则列表
+
+# 合规配置
+compliance:
+  enabled: true
+  retention_policies:
+    bars: years_3
+    financial: years_7
+    fundamental: years_3
+    minute: years_1
+    derivative: years_2
+    third_party: years_5
+
+# 审计配置
+audit:
+  enabled: true
+  retention_days: 365
+  log_level: INFO  # DEBUG, INFO, WARNING, ERROR
+
+# 报告配置
+reports:
+  output_dir: reports/governance
+  formats:
+    - json
+    - html
+  auto_generate: true
+  schedule: daily  # daily, weekly, monthly
+
+# 数据分类配置
+data_classification:
+  default_level: internal  # public, internal, confidential, restricted
+  classification_rules:
+    bars: internal
+    financial: confidential
+    fundamental: internal
+    minute: internal
+    derivative: internal
+    third_party: public
+
+# 访问控制配置
+access_control:
+  default_access_level: read  # read, write, delete, admin
+  session_timeout: 3600  # 会话超时时间（秒）
+  max_concurrent_sessions: 10
+
+# 告警配置
+alerts:
+  enabled: true
+  channels:
+    - console
+    - log
+  # - email  # 需要配置SMTP
+  # - webhook  # 需要配置webhook URL
+  
+  # 告警规则
+  rules:
+    data_quality_low:
+      metric: data_quality_score
+      threshold: 0.8
+      level: warning
+      message: "数据质量分数过低"
+    
+    data_freshness_old:
+      metric: data_age_hours
+      threshold: 24
+      level: error
+      message: "数据更新延迟"
+    
+    storage_space_low:
+      metric: storage_usage_percent
+      threshold: 90
+      level: critical
+      message: "存储空间不足"
+    
+    api_error_rate_high:
+      metric: api_error_rate
+      threshold: 0.1
+      level: error
+      message: "API错误率过高"
+
+# 血缘追踪配置
+lineage:
+  enabled: true
+  max_depth: 10  # 最大追踪深度
+  auto_track: true  # 自动追踪数据血缘
+  retention_days: 90  # 血缘信息保留天数
+
+# 数据目录配置
+catalog:
+  enabled: true
+  auto_discovery: true  # 自动发现数据资产
+  schema_validation: true  # 启用模式验证
+  metadata_extraction: true  # 启用元数据提取
+
+# 性能配置
+performance:
+  batch_size: 1000  # 批处理大小
+  cache_size: 10000  # 缓存大小
+  parallel_workers: 4  # 并行工作线程数
+  timeout: 30  # 操作超时时间（秒）
