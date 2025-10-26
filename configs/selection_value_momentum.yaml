@@ -1,0 +1,35 @@
+# 价值动量策略配置
+selection:
+  strategy_name: value_momentum
+  model_version: v1.0
+  trade_date: 2025-10-26
+  universe: CSI300
+  rebalance_freq: 5d
+
+factors:
+  lookback_momentum: 60          # 动量计算窗口（较短）
+  lookback_volatility: 20        # 波动率窗口
+  winsorize_p: 0.02              # 去极值范围（更宽松）
+  neutralize_by: ["industry"]    # 只按行业中性化
+  weights:
+    momentum_60: 0.6             # 更重视动量
+    volatility_20: -0.2          # 适度考虑波动率
+    pe_ttm: -0.2                 # 适度考虑估值
+
+selection_rules:
+  top_n: 30
+  long_only: true
+  direction: 1
+  ranking_method: first
+  min_turnover: 3e7
+  exclude_st: true
+  exclude_suspended: true
+  exclude_limit_up_down: true
+
+weighting:
+  method: equal_weight           # 等权重
+  cap_per_name: 0.1
+  max_industry_weight: 0.3
+
+output:
+  save_path: data/dws/signals/

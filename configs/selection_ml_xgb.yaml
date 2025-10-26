@@ -1,0 +1,45 @@
+# 机器学习XGBoost策略配置
+selection:
+  strategy_name: ml_xgb
+  model_version: v1.0
+  trade_date: 2025-10-26
+  universe: CSI300
+  rebalance_freq: 5d
+
+factors:
+  lookback_momentum: 120         # 动量计算窗口
+  lookback_volatility: 20        # 波动率窗口
+  lookback_rsi: 14               # RSI指标
+  lookback_macd: 26              # MACD指标
+  winsorize_p: 0.01              # 去极值范围
+  neutralize_by: ["industry", "mkt_cap"]  # 中性化维度
+  # XGBoost会自动学习权重，这里不需要手动设置
+
+ml_model:
+  algorithm: xgboost
+  n_estimators: 100
+  max_depth: 6
+  learning_rate: 0.1
+  subsample: 0.8
+  colsample_bytree: 0.8
+  random_state: 42
+  train_window: 252              # 训练窗口（1年）
+  retrain_freq: 20               # 重训练频率（20个交易日）
+
+selection_rules:
+  top_n: 40
+  long_only: true
+  direction: 1
+  ranking_method: ml_score       # 使用ML模型得分
+  min_turnover: 5e7
+  exclude_st: true
+  exclude_suspended: true
+  exclude_limit_up_down: true
+
+weighting:
+  method: ml_score_weight        # 基于ML得分的权重
+  cap_per_name: 0.05
+  max_industry_weight: 0.2
+
+output:
+  save_path: data/dws/signals/

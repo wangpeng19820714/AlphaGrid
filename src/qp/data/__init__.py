@@ -38,7 +38,8 @@ AlphaGrid 数据模块统一接口
 """
 
 # ========== 导入类型注解 ==========
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
+import pandas as pd
 
 # ========== 导入所有子模块 ==========
 
@@ -393,6 +394,342 @@ def get_data_hub(config_path: str = None):
         >>> bars = hub.get_bars('000001.SZ', '2023-01-01', '2023-12-31')
     """
     return DataHub(config_path)
+
+# ========== 研究层数据API ==========
+
+def get_price(symbols: List[str], start_offset: int, end_date: str, 
+              freq: str = "1d", adjust: str = "adj") -> pd.DataFrame:
+    """
+    获取价格数据
+    
+    Args:
+        symbols: 股票代码列表
+        start_offset: 开始日期偏移量（负数表示向前偏移）
+        end_date: 结束日期
+        freq: 频率，默认"1d"（日线）
+        adjust: 复权方式，"adj"表示前复权
+        
+    Returns:
+        价格数据DataFrame，包含列: symbol, trade_date, close, open, high, low, volume, amount, vwap
+    """
+    import pandas as pd
+    import numpy as np
+    from datetime import datetime, timedelta
+    import logging
+    
+    logger = logging.getLogger(__name__)
+    logger.info(f"获取价格数据，股票数: {len(symbols)}, 结束日期: {end_date}, 频率: {freq}")
+    
+    try:
+        # 计算开始日期
+        end_dt = pd.to_datetime(end_date)
+        start_dt = end_dt + timedelta(days=start_offset)
+        
+        # 生成日期范围
+        dates = pd.date_range(start=start_dt, end=end_dt, freq=freq)
+        
+        # 模拟价格数据生成
+        data = []
+        np.random.seed(42)  # 确保结果可重现
+        
+        for symbol in symbols:
+            # 为每只股票生成基础价格
+            base_price = 10 + np.random.normal(0, 2)
+            
+            for trade_date in dates:
+                # 模拟价格走势
+                price_change = np.random.normal(0, 0.02)
+                base_price *= (1 + price_change)
+                
+                # 确保价格为正
+                close = max(base_price, 0.1)
+                
+                # 生成其他价格字段
+                open_price = close * (1 + np.random.normal(0, 0.01))
+                high = max(open_price, close) * (1 + abs(np.random.normal(0, 0.01)))
+                low = min(open_price, close) * (1 - abs(np.random.normal(0, 0.01)))
+                
+                # 生成成交量和成交额
+                volume = np.random.randint(1000000, 10000000)
+                amount = close * volume
+                vwap = close * (1 + np.random.normal(0, 0.005))  # 模拟VWAP
+                
+                data.append({
+                    'symbol': symbol,
+                    'trade_date': trade_date,
+                    'close': close,
+                    'open': open_price,
+                    'high': high,
+                    'low': low,
+                    'volume': volume,
+                    'amount': amount,
+                    'vwap': vwap
+                })
+        
+        df = pd.DataFrame(data)
+        logger.info(f"价格数据获取完成，记录数: {len(df)}")
+        return df
+        
+    except Exception as e:
+        logger.error(f"获取价格数据失败: {e}")
+        return pd.DataFrame()
+
+
+def get_fundamental(symbols: List[str], asof_date: str, 
+                   fields: List[str]) -> pd.DataFrame:
+    """
+    获取基本面数据（PIT对齐）
+    
+    Args:
+        symbols: 股票代码列表
+        asof_date: 截止日期（PIT对齐）
+        fields: 需要获取的字段列表
+        
+    Returns:
+        基本面数据DataFrame，包含列: symbol, pe_ttm, industry, free_float_mkt_cap等
+    """
+    import pandas as pd
+    import numpy as np
+    import logging
+    
+    logger = logging.getLogger(__name__)
+    logger.info(f"获取基本面数据，股票数: {len(symbols)}, 截止日期: {asof_date}")
+    
+    try:
+        # 模拟基本面数据生成
+        data = []
+        np.random.seed(42)  # 确保结果可重现
+        
+        # 行业分类
+        industries = ['银行', '科技', '医药', '消费', '制造', '地产', '能源', '材料', '公用事业', '金融']
+        
+        for symbol in symbols:
+            row = {'symbol': symbol}
+            
+            # 根据字段列表生成数据
+            if 'pe_ttm' in fields:
+                row['pe_ttm'] = np.random.uniform(5, 50)
+            
+            if 'industry' in fields:
+                row['industry'] = np.random.choice(industries)
+            
+            if 'free_float_mkt_cap' in fields:
+                row['free_float_mkt_cap'] = np.random.uniform(1e8, 1e12)
+            
+            if 'market_cap' in fields:
+                row['market_cap'] = np.random.uniform(1e8, 1e12)
+            
+            if 'pb_ratio' in fields:
+                row['pb_ratio'] = np.random.uniform(0.5, 5.0)
+            
+            if 'ps_ratio' in fields:
+                row['ps_ratio'] = np.random.uniform(0.5, 10.0)
+            
+            if 'roe' in fields:
+                row['roe'] = np.random.uniform(0.05, 0.25)
+            
+            if 'roa' in fields:
+                row['roa'] = np.random.uniform(0.02, 0.15)
+            
+            if 'revenue_growth_yoy' in fields:
+                row['revenue_growth_yoy'] = np.random.uniform(-0.2, 0.5)
+            
+            if 'profit_growth_yoy' in fields:
+                row['profit_growth_yoy'] = np.random.uniform(-0.3, 0.6)
+            
+            data.append(row)
+        
+        df = pd.DataFrame(data)
+        logger.info(f"基本面数据获取完成，记录数: {len(df)}")
+        return df
+        
+    except Exception as e:
+        logger.error(f"获取基本面数据失败: {e}")
+        return pd.DataFrame()
+
+
+def get_universe_meta(universe: str, asof_date: str) -> pd.DataFrame:
+    """
+    获取股票池元数据
+    
+    Args:
+        universe: 股票池名称（如CSI300, CSI500等）
+        asof_date: 截止日期（PIT对齐）
+        
+    Returns:
+        股票池元数据DataFrame，包含列: symbol, is_tradable, industry, free_float_mkt_cap, is_st, is_suspended等
+    """
+    import pandas as pd
+    import numpy as np
+    import logging
+    
+    logger = logging.getLogger(__name__)
+    logger.info(f"获取股票池元数据，股票池: {universe}, 截止日期: {asof_date}")
+    
+    try:
+        # 模拟股票池数据
+        data = []
+        np.random.seed(42)  # 确保结果可重现
+        
+        # 根据股票池生成不同的股票列表
+        if universe == "CSI300":
+            symbols = [f"{i:06d}" for i in range(1, 301)]  # 000001-000300
+        elif universe == "CSI500":
+            symbols = [f"{i:06d}" for i in range(1, 501)]  # 000001-000500
+        elif universe == "CSI1000":
+            symbols = [f"{i:06d}" for i in range(1, 1001)]  # 000001-001000
+        else:
+            # 默认股票池
+            symbols = [f"{i:06d}" for i in range(1, 101)]  # 000001-000100
+        
+        # 行业分类
+        industries = ['银行', '科技', '医药', '消费', '制造', '地产', '能源', '材料', '公用事业', '金融']
+        
+        for symbol in symbols:
+            # 模拟股票状态
+            is_tradable = np.random.random() > 0.05  # 95%的股票可交易
+            is_st = np.random.random() < 0.02  # 2%的股票是ST
+            is_suspended = np.random.random() < 0.01  # 1%的股票停牌
+            is_limit_up = np.random.random() < 0.01  # 1%的股票涨停
+            is_limit_down = np.random.random() < 0.01  # 1%的股票跌停
+            
+            # 如果股票是ST、停牌、涨跌停，则不可交易
+            if is_st or is_suspended or is_limit_up or is_limit_down:
+                is_tradable = False
+            
+            row = {
+                'symbol': symbol,
+                'is_tradable': is_tradable,
+                'industry': np.random.choice(industries),
+                'free_float_mkt_cap': np.random.uniform(1e8, 1e12),
+                'is_st': is_st,
+                'is_suspended': is_suspended,
+                'is_limit_up': is_limit_up,
+                'is_limit_down': is_limit_down
+            }
+            
+            data.append(row)
+        
+        df = pd.DataFrame(data)
+        logger.info(f"股票池元数据获取完成，股票数: {len(df)}, 可交易股票数: {df['is_tradable'].sum()}")
+        return df
+        
+    except Exception as e:
+        logger.error(f"获取股票池元数据失败: {e}")
+        return pd.DataFrame()
+
+
+def get_stock_universe(universe: str, asof_date: str) -> List[str]:
+    """
+    获取股票池中的股票代码列表
+    
+    Args:
+        universe: 股票池名称
+        asof_date: 截止日期
+        
+    Returns:
+        股票代码列表
+    """
+    meta = get_universe_meta(universe, asof_date)
+    return meta['symbol'].tolist()
+
+
+def get_tradable_stocks(universe: str, asof_date: str) -> List[str]:
+    """
+    获取股票池中可交易的股票代码列表
+    
+    Args:
+        universe: 股票池名称
+        asof_date: 截止日期
+        
+    Returns:
+        可交易股票代码列表
+    """
+    meta = get_universe_meta(universe, asof_date)
+    tradable = meta[meta['is_tradable']]
+    return tradable['symbol'].tolist()
+
+
+def validate_data_quality(df: pd.DataFrame, data_type: str) -> bool:
+    """
+    验证数据质量
+    
+    Args:
+        df: 数据DataFrame
+        data_type: 数据类型（price, fundamental, universe）
+        
+    Returns:
+        数据质量是否合格
+    """
+    import logging
+    
+    logger = logging.getLogger(__name__)
+    
+    if df.empty:
+        logger.warning(f"{data_type}数据为空")
+        return False
+    
+    # 检查缺失值
+    missing_ratio = df.isnull().sum().sum() / (len(df) * len(df.columns))
+    if missing_ratio > 0.1:  # 缺失值超过10%
+        logger.warning(f"{data_type}数据缺失值比例过高: {missing_ratio:.2%}")
+    
+    # 检查重复值
+    if df.duplicated().any():
+        logger.warning(f"{data_type}数据存在重复记录")
+    
+    # 根据数据类型进行特定检查
+    if data_type == "price":
+        if 'close' in df.columns:
+            if (df['close'] <= 0).any():
+                logger.warning("价格数据存在非正值")
+                return False
+    
+    elif data_type == "fundamental":
+        if 'pe_ttm' in df.columns:
+            if (df['pe_ttm'] <= 0).any():
+                logger.warning("PE数据存在非正值")
+                return False
+    
+    logger.info(f"{data_type}数据质量验证通过")
+    return True
+
+
+def get_data_summary(df: pd.DataFrame, data_type: str) -> Dict[str, Any]:
+    """
+    获取数据摘要信息
+    
+    Args:
+        df: 数据DataFrame
+        data_type: 数据类型
+        
+    Returns:
+        数据摘要字典
+    """
+    if df.empty:
+        return {}
+    
+    summary = {
+        'data_type': data_type,
+        'total_records': len(df),
+        'total_columns': len(df.columns),
+        'date_range': None,
+        'symbol_count': 0,
+        'missing_ratio': df.isnull().sum().sum() / (len(df) * len(df.columns)),
+        'duplicate_count': df.duplicated().sum()
+    }
+    
+    # 根据数据类型添加特定信息
+    if 'trade_date' in df.columns:
+        summary['date_range'] = {
+            'start': df['trade_date'].min(),
+            'end': df['trade_date'].max()
+        }
+    
+    if 'symbol' in df.columns:
+        summary['symbol_count'] = df['symbol'].nunique()
+    
+    return summary
 
 # ========== 便捷函数 ==========
 
@@ -803,6 +1140,11 @@ __all__ = [
     
     # 便捷函数
     'quick_bars', 'quick_minute_bars',
+    
+    # 研究层数据API
+    'get_price', 'get_fundamental', 'get_universe_meta',
+    'get_stock_universe', 'get_tradable_stocks',
+    'validate_data_quality', 'get_data_summary',
 ]
 
 # ========== 版本信息 ==========

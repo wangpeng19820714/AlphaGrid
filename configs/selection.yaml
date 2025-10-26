@@ -1,0 +1,38 @@
+# 通用选股配置文件
+selection:
+  strategy_name: rank_topn_neutral
+  model_version: v1.0
+  trade_date: 2025-10-26
+  universe: CSI300
+  rebalance_freq: 5d
+
+factors:
+  lookback_momentum: 120         # 动量计算窗口
+  lookback_volatility: 20        # 波动率窗口
+  winsorize_p: 0.01              # 去极值范围
+  neutralize_by: ["industry", "mkt_cap"]  # 中性化维度
+  weights:
+    momentum_120: 0.4
+    volatility_20: -0.3          # 负权重，低波动率更好
+    pe_ttm: -0.3                 # 负权重，低PE更好
+
+selection_rules:
+  top_n: 50
+  long_only: true
+  direction: 1
+  ranking_method: first
+  min_turnover: 5e7
+  exclude_st: true
+  exclude_suspended: true
+  exclude_limit_up_down: true
+
+weighting:
+  method: softmax
+  tau: 0.15
+  cap_per_name: 0.05
+  max_industry_weight: 0.2
+
+output:
+  save_path: data/dws/signals/
+  reports_dir: reports/stock_selection
+  logs_dir: logs
