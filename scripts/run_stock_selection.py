@@ -7,8 +7,6 @@
 
 import sys
 import os
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
-
 import pandas as pd
 import numpy as np
 from datetime import datetime, date
@@ -17,8 +15,8 @@ from pathlib import Path
 import argparse
 
 # 添加项目根目录到Python路径
-project_root = os.path.join(os.path.dirname(__file__), '..', '..')
-sys.path.insert(0, project_root)
+project_root = Path(__file__).parent.parent
+sys.path.insert(0, str(project_root))
 
 from qp.research.selector import StockSelector, SelectionConfig, run_stock_selection
 from qp.research.data_interface import create_data_interface
@@ -27,7 +25,7 @@ from qp.research.data_interface import create_data_interface
 def setup_logging(log_level: str = "INFO", log_dir: str = "logs"):
     """设置日志"""
     # 确保日志目录存在 - 使用项目根目录
-    project_root = Path(__file__).parent.parent.parent.parent  # 从 src/qp/research/ 回到项目根目录
+    project_root = Path(__file__).parent.parent  # 从 scripts/ 回到项目根目录
     log_path = project_root / log_dir.lstrip('./')  # 移除 ./ 前缀
     log_path.mkdir(parents=True, exist_ok=True)
     
@@ -189,7 +187,7 @@ def main():
     logger = logging.getLogger(__name__)
     
     # 创建输出目录 - 使用项目根目录
-    project_root = Path(__file__).parent.parent.parent.parent  # 从 src/qp/research/ 回到项目根目录
+    project_root = Path(__file__).parent.parent  # 从 scripts/ 回到项目根目录
     output_path = project_root / args.output_dir.lstrip('./')  # 移除 ./ 前缀
     output_path.mkdir(parents=True, exist_ok=True)
     
