@@ -1,2 +1,3 @@
 *.pyc
 logs/stock_selection.log
+logs/data_update.log
