@@ -51,6 +51,5 @@ layers:
   full:                          # level3_full：全市场（建议周更）
     path: level3_full
     auto_discover: false         # 关闭自动发现
-    symbols_file: configs/all_stocks.txt  
     symbols: []                  # 若不 auto_discover，可直接放这里或用文件
     update_day_of_week: 6        # 0=周一 ... 6=周日；仅在该日更新（或加 --force）
