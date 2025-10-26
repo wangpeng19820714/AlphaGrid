@@ -9,8 +9,8 @@ start: 2024-01-01
 end: today
 
 # 并发设置
-concurrency: 2                   # 并发线程数（按标的）- 降低并发避免API限制
-retry: 2                         # 失败重试次数
+concurrency: 1                   # 并发线程数（按标的）- 降低并发避免API限制，改为1避免连接中断
+retry: 5                         # 失败重试次数，增加到5次
 
 # TuShare 专用（可用环境变量 TUSHARE_TOKEN 覆盖）
 tushare_token: null

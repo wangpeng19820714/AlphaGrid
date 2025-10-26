@@ -158,6 +158,10 @@ class AkShareFetcher(DataFetcher):
     @staticmethod
     def fetch(symbol: str, start: str, end: str, adjust: str = "qfq") -> pd.DataFrame:
         import akshare as ak
+        import time
+        
+        # 添加延迟避免API限制
+        time.sleep(0.5)  # 每次请求间隔0.5秒
         
         # 确保参数是字符串
         symbol = str(symbol)

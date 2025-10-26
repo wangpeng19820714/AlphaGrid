@@ -566,7 +566,15 @@ def main():
         else:
             success = False
             logger.error(f"批量历史数据更新失败: {result.stderr}")
+            print("=" * 60)
+            print("错误输出:")
+            print("=" * 60)
             print(result.stderr)
+            print("=" * 60)
+            print("标准输出:")
+            print("=" * 60)
+            print(result.stdout)
+            print("=" * 60)
     
     else:
         logger.error(f"未知的数据类型: {args.data_type}")
