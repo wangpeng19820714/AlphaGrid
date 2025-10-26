@@ -460,7 +460,7 @@ def main():
     
     # 数据更新参数
     parser.add_argument('--data-type', type=str, required=True,
-                       choices=['bar', 'minute', 'financial', 'fundamental', 'third_party', 'layers'],
+                       choices=['bar', 'minute', 'financial', 'fundamental', 'third_party', 'layers', 'batch_history'],
                        help='数据类型')
     parser.add_argument('--universe', type=str, default='hs300',
                        choices=['all', 'hs300', 'zz500', 'zz1000'],
@@ -478,6 +478,10 @@ def main():
     parser.add_argument('--third-party-type', type=str,
                        choices=['index_components', 'industry_classifications', 'macro_data'],
                        help='第三方数据类型')
+    parser.add_argument('--layer', type=str, default='',
+                       help='批量历史数据更新层 (core, sector, full)')
+    parser.add_argument('--force', action='store_true',
+                       help='强制更新（忽略更新限制）')
     
     args = parser.parse_args()
     
@@ -541,6 +545,32 @@ def main():
             return
         
         success = updater.process_data_layers(symbols, args.trade_date)
+    
+    elif args.data_type == 'batch_history':
+        # 调用批量历史数据更新脚本
+        import subprocess
+        
+        layer_args = f"--only {args.layer}" if args.layer else ""
+        force_args = "--force" if args.force else ""
+        
+        cmd = f"python3 src/qp/scripts/update_history_layers.py --config {args.config} {layer_args} {force_args}"
+        
+        logger.info(f"执行批量历史数据更新: {cmd}")
+        result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+        
+        if result.returncode == 0:
+            success = True
+            logger.info("批量历史数据更新完成")
+            if result.stdout:
+                print(result.stdout)
+        else:
+            success = False
+            logger.error(f"批量历史数据更新失败: {result.stderr}")
+            print(result.stderr)
+    
+    else:
+        logger.error(f"未知的数据类型: {args.data_type}")
+        success = False
     
     # 输出结果
     if success:
