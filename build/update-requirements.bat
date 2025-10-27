@@ -10,20 +10,26 @@ echo   Requirements 自动更新工具
 echo ========================================
 echo.
 
-REM 检查Python环境
-python --version >nul 2>&1
-if errorlevel 1 (
-    echo [错误] 未找到 Python
-    pause
-    exit /b 1
-)
+REM 检查Python环境并设置命令
+set PYTHON_CMD=
 
-REM 检查Python3环境
+REM 优先尝试 python3
 python3 --version >nul 2>&1
-if errorlevel 1 (
-    echo [错误] 未找到 Python3
-    pause
-    exit /b 1
+if not errorlevel 1 (
+    set PYTHON_CMD=python3
+    echo [信息] 使用 python3 命令
+) else (
+    REM 如果 python3 不存在，尝试 python
+    python --version >nul 2>&1
+    if not errorlevel 1 (
+        set PYTHON_CMD=python
+        echo [信息] python3 不可用，使用 python 命令
+    ) else (
+        echo [错误] 未找到 Python 环境
+        echo [提示] 请确保已安装 Python 并添加到 PATH
+        pause
+        exit /b 1
+    )
 )
 
 REM 检查update_requirements.py是否存在
@@ -38,7 +44,7 @@ echo [信息] 开始更新 requirements...
 echo.
 
 REM 调用Python工具
-python3 update_requirements.py --yes
+%PYTHON_CMD% update_requirements.py --yes
 if errorlevel 1 (
     echo [错误] 更新 requirements 失败
     pause
