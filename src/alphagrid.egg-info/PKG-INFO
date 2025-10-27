@@ -1,0 +1,141 @@
+Metadata-Version: 2.4
+Name: alphagrid
+Version: 0.1.0
+Summary: AlphaGrid 量化交易平台
+Home-page: https://github.com/alphagrid/alphagrid
+Author: AlphaGrid Team
+Author-email: AlphaGrid Team <team@alphagrid.com>
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Financial and Insurance Industry
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Topic :: Office/Business :: Financial :: Investment
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+Provides-Extra: dev
+Requires-Dist: pytest>=7.0.0; extra == "dev"
+Requires-Dist: pytest-cov>=4.0.0; extra == "dev"
+Requires-Dist: black>=23.0.0; extra == "dev"
+Requires-Dist: flake8>=6.0.0; extra == "dev"
+Requires-Dist: mypy>=1.0.0; extra == "dev"
+Provides-Extra: minimal
+Requires-Dist: pandas>=2.0.0; extra == "minimal"
+Requires-Dist: numpy>=1.24.0; extra == "minimal"
+Requires-Dist: pyyaml>=6.0; extra == "minimal"
+Requires-Dist: pyarrow>=12.0.0; extra == "minimal"
+Dynamic: author
+Dynamic: home-page
+Dynamic: requires-python
+
+
+# AlphaGrid 量化交易回测系统
+
+一个基于 Python 的量化交易回测框架，支持向量化回测、多种技术指标和绩效分析。
+
+## 🚀 快速开始
+
+### 安装依赖
+
+#### 最小安装（推荐）
+```bash
+pip install -r requirements/requirements-minimal.txt
+```
+
+#### 完整安装
+```bash
+pip install -r requirements/requirements.txt
+```
+
+#### 开发环境安装
+```bash
+pip install -r requirements/requirements-dev.txt
+```
+
+### 运行回测
+
+```bash
+cd qp
+python3 run_backtest.py
+```
+
+### 更新依赖文件
+
+项目提供了自动更新requirements的工具：
+
+```bash
+# Windows
+python scripts/update_requirements.py --yes
+
+# Linux/Mac  
+python scripts/update_requirements.py --yes
+```
+
+详细使用说明请参考 [Requirements工具文档](docs/REQUIREMENTS_TOOLS.md)
+
+## 📦 依赖说明
+
+### 核心依赖
+- **pandas**: 数据处理和分析
+- **numpy**: 数值计算
+- **pyarrow**: 高性能数据缓存（可选，但推荐）
+
+### 开发依赖
+- **pytest**: 单元测试
+- **black**: 代码格式化
+- **flake8**: 代码检查
+- **mypy**: 类型检查
+
+## 📁 项目结构
+
+```
+AlphaGrid/
+├── quant/                    # 核心代码
+│   ├── engine/              # 回测引擎
+│   │   ├── data.py         # 数据加载和缓存
+│   │   ├── backtest.py     # 向量化回测
+│   │   └── metrics.py      # 绩效指标
+│   ├── strategies/          # 交易策略
+│   │   └── sma_cross.py    # SMA交叉策略
+│   └── run_backtest.py     # 主运行脚本
+├── data/                    # 数据目录
+├── requirements/            # 依赖配置
+│   ├── requirements.txt         # 完整依赖
+│   ├── requirements-minimal.txt # 最小依赖
+│   ├── requirements-prod.txt    # 生产依赖
+│   └── requirements-dev.txt     # 开发依赖
+└── scripts/                 # 工具脚本
+```
+
+## 🔧 功能特性
+
+- ✅ 向量化回测引擎
+- ✅ 多种技术指标支持
+- ✅ 完整的绩效分析
+- ✅ 数据缓存优化
+- ✅ 模块化设计
+- ✅ 类型提示支持
+
+## 📊 示例输出
+
+```
+🚀 开始量化回测...
+📂 加载股票数据...
+✅ 数据加载完成，共 365 个交易日
+🎯 生成交易信号...
+✅ 信号生成完成，共 335 个交易信号
+⚡ 执行向量化回测...
+
+==================================================
+📊 回测绩效报告
+==================================================
+💰 总盈亏:       781,578.18
+📈 年化收益:        -11.82%
+📊 夏普比率:           0.45
+📉 年化波动:        114.76%
+⬇️  最大回撤:   -1,283,525.74
+📊 回撤比例:       -107.92%
+==================================================
+```
